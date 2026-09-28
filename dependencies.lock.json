@@ -1,0 +1,41 @@
+{
+  "note": "Exact local validation versions, not a dependency resolver lock",
+  "dependencies": [
+    {
+      "name": "capstone",
+      "version": "5.0.9",
+      "license": "BSD-3-Clause",
+      "source": "https://github.com/capstone-engine/capstone"
+    },
+    {
+      "name": "unicorn",
+      "version": "2.1.4",
+      "license": "GPL-2.0-only AND GPL-2.0-or-later",
+      "source": "https://github.com/unicorn-engine/unicorn"
+    },
+    {
+      "name": "yaml-cpp",
+      "version": "0.9.0",
+      "license": "MIT",
+      "source": "https://github.com/jbeder/yaml-cpp"
+    },
+    {
+      "name": "nlohmann/json",
+      "version": "3.12.0",
+      "license": "MIT",
+      "source": "https://github.com/nlohmann/json"
+    },
+    {
+      "name": "libgcrypt",
+      "version": "1.12.4",
+      "license": "LGPL-2.1-or-later (library); GPL-2.0-or-later (tools)",
+      "source": "https://gnupg.org/software/libgcrypt/"
+    },
+    {
+      "name": "libgpg-error",
+      "version": "1.61",
+      "license": "LGPL-2.1-or-later (library)",
+      "source": "https://gnupg.org/software/libgpg-error/"
+    }
+  ]
+}

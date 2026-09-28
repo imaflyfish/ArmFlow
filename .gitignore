@@ -1,0 +1,12 @@
+/build/
+/dist/
+/test-output/
+*.i64
+*.idb
+*.id0
+*.id1
+*.id2
+*.nam
+*.til
+__pycache__/
+.DS_Store

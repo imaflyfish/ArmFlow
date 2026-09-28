@@ -1,0 +1,58 @@
+name: macOS verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install build dependencies
+        run: brew install cmake ninja pkgconf nlohmann-json libgcrypt capstone unicorn yaml-cpp llvm lld
+      - name: Record toolchain
+        run: |
+          mkdir -p build/ci-evidence
+          { sw_vers; uname -m; clang++ --version; cmake --version; brew list --versions; } > build/ci-evidence/toolchain.txt
+      - name: Configure and build Release
+        run: |
+          set -o pipefail
+          cmake --preset release -DARMFLOW_CROSS_CLANG="$(brew --prefix llvm)/bin/clang" -DARMFLOW_ELF_LINKER="$(brew --prefix lld)/bin/ld.lld" 2>&1 | tee build/ci-evidence/configure.txt
+          cmake --build --preset release --parallel 2 2>&1 | tee build/ci-evidence/build.txt
+      - name: Run native checks
+        run: |
+          set -o pipefail
+          ctest --preset release --verbose 2>&1 | tee build/ci-evidence/ctest.txt
+          ctest --test-dir build/release --show-only=json-v1 > build/ci-evidence/test-inventory.json
+          python3 -c 'import json; x=json.load(open("build/ci-evidence/test-inventory.json")); assert len(x["tests"]) == 10, "full fixture-backed test suite was not configured"'
+      - name: Verify installed package and independent consumer
+        run: |
+          set -o pipefail
+          cmake --install build/release --prefix "$PWD/build/installed" 2>&1 | tee build/ci-evidence/install.txt
+          cmake -S examples/consumer -B build/consumer -G Ninja -DCMAKE_PREFIX_PATH="$PWD/build/installed"
+          cmake --build build/consumer --parallel 2
+          build/consumer/consumer build/release/switch_cases.elf | tee build/ci-evidence/consumer.txt
+      - name: Save verification logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ArmFlow-macos-verification-${{ github.sha }}
+          path: build/ci-evidence/
+          if-no-files-found: error
+          retention-days: 14

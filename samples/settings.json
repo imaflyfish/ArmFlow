@@ -1,0 +1,11 @@
+{
+  "executable_regions": [
+    {
+      "label": "load_0"
+    }
+  ],
+  "analysis": {
+    "single_level": true,
+    "comparison_tree": true
+  }
+}
