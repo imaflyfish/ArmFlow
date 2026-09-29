@@ -148,9 +148,12 @@ EmulationResult command_execution(const JsonDoc &specification,
   } else
     throw FlowError("unknown command oracle protocol");
   auto timeout = address_of_json(
-      specification.value("command_timeout_milliseconds", JsonDoc(30000u)));
-  if (timeout == 0 || timeout > 60000)
-    throw FlowError("command timeout must be 1..60000 milliseconds");
+      specification.value("command_timeout_milliseconds",
+                          JsonDoc(default_process_timeout_milliseconds)));
+  if (timeout == 0 || timeout > maximum_process_timeout_milliseconds)
+    throw FlowError("command timeout must be 1.." +
+                    std::to_string(maximum_process_timeout_milliseconds) +
+                    " milliseconds");
   auto process =
       spawn_process(arguments, payload, static_cast<unsigned>(timeout));
   if (process.exit_code != 0)

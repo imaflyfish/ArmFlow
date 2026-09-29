@@ -8,10 +8,12 @@ JsonDoc gather_external_trace(const BinaryImage &image,
   const auto &command = configuration.at("argv");
   if (!command.is_array() || command.empty() || command.size() > 256)
     throw FlowError("trace_command.argv requires 1..256 arguments");
-  const auto timeout = address_of_json(
-      configuration.value("timeout_milliseconds", JsonDoc(30000)));
-  if (!timeout || timeout > 60000)
-    throw FlowError("trace timeout must be in 1..60000 milliseconds");
+  const auto timeout = address_of_json(configuration.value(
+      "timeout_milliseconds", JsonDoc(default_process_timeout_milliseconds)));
+  if (!timeout || timeout > maximum_process_timeout_milliseconds)
+    throw FlowError("trace timeout must be in 1.." +
+                    std::to_string(maximum_process_timeout_milliseconds) +
+                    " milliseconds");
   ScratchDirectory temporary;
   const auto path = temporary.path() / "source.json";
   store_document(path, image.snapshot());

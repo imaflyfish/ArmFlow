@@ -76,7 +76,8 @@ CommandOutcome spawn_process(const std::vector<std::string> &arguments,
                              unsigned timeout_milliseconds,
                              std::size_t maximum_output) {
   if (arguments.empty() || arguments.size() > 256 || arguments[0].empty() ||
-      timeout_milliseconds == 0 || timeout_milliseconds > 60000 ||
+      timeout_milliseconds == 0 ||
+      timeout_milliseconds > maximum_process_timeout_milliseconds ||
       maximum_output == 0 || maximum_output > 64 * 1024 * 1024 ||
       input.size() > 64 * 1024 * 1024)
     throw FlowError("invalid process request limits");
