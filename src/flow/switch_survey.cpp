@@ -265,37 +265,11 @@ std::vector<SwitchSite> comparison_sites(const BinaryImage &image,
           if (current->operation != Mnemonic::conditional_branch ||
               !current->target || !flags || current->condition >= 14)
             return {};
-          const bool n = *flags & 8, z = *flags & 4, c = *flags & 2,
-                     v = *flags & 1;
-          bool take = false;
-          switch (current->condition >> 1) {
-          case 0:
-            take = z;
-            break;
-          case 1:
-            take = c;
-            break;
-          case 2:
-            take = n;
-            break;
-          case 3:
-            take = v;
-            break;
-          case 4:
-            take = c && !z;
-            break;
-          case 5:
-            take = n == v;
-            break;
-          case 6:
-            take = !z && n == v;
-            break;
-          default:
-            return {};
-          }
-          if (current->condition & 1)
-            take = !take;
-          position = take ? *current->target : position + 4;
+          // The decoder owns the condition table. This flag word holds N,Z,C,V
+          // in the same order as the register, four bits lower.
+          position = condition_passes(current->condition, *flags << 28)
+                         ? *current->target
+                         : position + 4;
         }
         return {};
       };
