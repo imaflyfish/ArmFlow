@@ -42,6 +42,11 @@ void close_on_exec(int descriptor) {
 struct ChildProcess {
   pid_t pid = -1;
   bool reaped = false;
+  ChildProcess() = default;
+  // A copy would signal the group a second time, and once the first destructor
+  // has reaped the child the number may name an unrelated process group.
+  ChildProcess(const ChildProcess &) = delete;
+  ChildProcess &operator=(const ChildProcess &) = delete;
   ~ChildProcess() {
     if (pid > 0) {
       kill(-pid, SIGKILL);
