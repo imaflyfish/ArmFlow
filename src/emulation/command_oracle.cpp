@@ -66,7 +66,7 @@ EmulationResult execution_of_json(const JsonDoc &record,
   for (const auto &[source, destinations] : edges.items()) {
     auto address = address_of_json(JsonDoc(source));
     if (!image.instruction(address) || !destinations.is_array() ||
-        destinations.size() > max_document_entries)
+        destinations.size() > maximum_document_entries)
       throw FlowError("invalid executed control edge");
     for (const auto &target : destinations) {
       if (++edge_count > 2000000)
@@ -78,7 +78,7 @@ EmulationResult execution_of_json(const JsonDoc &record,
     }
   }
   const auto &states = record.value("state_targets", JsonDoc::object());
-  if (!states.is_object() || states.size() > max_document_entries)
+  if (!states.is_object() || states.size() > maximum_document_entries)
     throw FlowError("invalid observed-state table");
   std::size_t values = 0;
   for (const auto &[site, entries] : states.items()) {
@@ -87,7 +87,7 @@ EmulationResult execution_of_json(const JsonDoc &record,
       throw FlowError("invalid observed-state site");
     for (const auto &[state, targets] : entries.items()) {
       if (++values > 1000000 || !targets.is_array() ||
-          targets.size() > max_document_entries)
+          targets.size() > maximum_document_entries)
         throw FlowError("observed-state count limit exceeded");
       for (const auto &target : targets)
         result.state_targets[branch][address_of_json(JsonDoc(state))].insert(

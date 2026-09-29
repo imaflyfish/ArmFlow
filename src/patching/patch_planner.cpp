@@ -6,12 +6,12 @@ namespace armflow {
 namespace {
 // Both liveness walks below follow branches through one function, so each
 // needs a ceiling on the instructions it visits before it gives up.
-constexpr unsigned max_walk_instructions = 1024;
+constexpr unsigned maximum_walk_instructions = 1024;
 bool dead_before_read(const BinaryImage &image, const OpcodeDecoder &decoder,
                       Address begin, unsigned reg, bool flags = false) {
   std::deque<Address> pending{begin};
   std::set<Address> seen;
-  unsigned budget = max_walk_instructions;
+  unsigned budget = maximum_walk_instructions;
   while (!pending.empty()) {
     auto address = pending.front();
     pending.pop_front();
@@ -146,7 +146,7 @@ bool overwritten_stack_slot(const BinaryImage &image,
   const auto &slot = *site.state_slot;
   std::deque<Address> pending{begin};
   std::set<Address> seen;
-  unsigned budget = max_walk_instructions;
+  unsigned budget = maximum_walk_instructions;
   while (!pending.empty()) {
     auto address = pending.front();
     pending.pop_front();
