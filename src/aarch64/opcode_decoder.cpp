@@ -219,7 +219,7 @@ DecodedWord OpcodeDecoder::decode(Address address, std::uint32_t word) const {
                : (change ? Mnemonic::select_increment : Mnemonic::select));
     result.condition = (word >> 12) & 15;
     result.observable = false;
-  } else if ((word & 0x1f000000) == 0x11000000) {
+  } else if ((word & 0x1f800000) == 0x11000000) {
     auto subtract = (word >> 30) & 1;
     set(subtract ? Mnemonic::subtract : Mnemonic::add);
     result.immediate = std::uint64_t((word >> 10) & 0xfff)

@@ -109,6 +109,16 @@ int main() {
         "BLR classification");
   check(decoder.decode(0x100000, 0xd65f03c0).operation == Mnemonic::return_,
         "RET classification");
+  // ADD/SUB (immediate) is selected by a six-bit opcode field. The tag
+  // arithmetic encodings differ from it only in that field's last bit, and
+  // their operands sit elsewhere, so reading one as an add would invent an
+  // immediate and mark a tag write as having no observable effect.
+  const auto add_immediate = decoder.decode(0x100000, 0x91001d08);
+  check(add_immediate.operation == Mnemonic::add &&
+            add_immediate.immediate == 7 && add_immediate.destination == 8,
+        "ADD immediate classification");
+  check(decoder.decode(0x100000, 0x91800108).operation != Mnemonic::add,
+        "tag arithmetic is not read as an add immediate");
   for (unsigned flags = 0; flags < 16; ++flags)
     for (unsigned condition = 0; condition < 14; condition += 2)
       check(condition_passes(condition, flags << 28) !=
