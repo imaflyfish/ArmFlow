@@ -268,6 +268,8 @@ void BinaryImage::validate() const {
     if (region.bytes.empty() || region.bytes.size() > maximum_image - total)
       throw FlowError("invalid or excessive memory region size");
     total += region.bytes.size();
+    // end() throws when begin + size would wrap; the value is not needed here,
+    // only the refusal.
     (void)region.end();
     ordered.push_back(&region);
   }

@@ -122,8 +122,10 @@ BranchTransition transition_of_json(const JsonDoc &record) {
     if (kind == "condition")
       integer(result.predicate.at("condition"), 0, 13);
     else if (kind == "bit") {
-      integer(result.predicate.at("register"), 0, 30);
-      integer(result.predicate.at("bit"), 0, 63);
+      // These calls are field checks: at() refuses a missing key and the
+      // range refuses an out-of-bounds value. Nothing needs the values.
+      (void)integer(result.predicate.at("register"), 0, 30);
+      (void)integer(result.predicate.at("bit"), 0, 63);
     } else
       throw FlowError("unknown transition predicate");
     (void)address_of_json(result.predicate.at("selection"));
