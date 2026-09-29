@@ -11,7 +11,20 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(CAPSTONE REQUIRED IMPORTED_TARGET capstone>=5.0)
 pkg_check_modules(UNICORN REQUIRED IMPORTED_TARGET unicorn>=2.1)
 pkg_check_modules(GCRYPT REQUIRED IMPORTED_TARGET libgcrypt>=1.10)
-add_library(armflow src/image/binary_image.cpp src/aarch64/opcode_decoder.cpp src/aarch64/constant_walker.cpp src/flow/switch_survey.cpp src/flow/transition_classifier.cpp src/flow/target_resolver.cpp src/report/artifact_writer.cpp src/emulation/emulation_oracle.cpp src/patching/patch_planner.cpp src/patching/patch_transaction.cpp src/system/process_spawn.cpp src/report/artifact_reader.cpp src/emulation/command_oracle.cpp)
+add_library(armflow
+  src/aarch64/constant_walker.cpp src/aarch64/opcode_decoder.cpp
+  src/app/batch_driver.cpp src/app/pipeline_driver.cpp
+  src/app/regression_checks.cpp
+  src/emulation/call_shims.cpp src/emulation/command_oracle.cpp
+  src/emulation/emulation_oracle.cpp src/emulation/trace_source.cpp
+  src/flow/state_expansion.cpp src/flow/switch_survey.cpp
+  src/flow/table_graph.cpp src/flow/target_resolver.cpp
+  src/flow/transition_classifier.cpp
+  src/image/binary_image.cpp
+  src/patching/cleanup_proposals.cpp src/patching/patch_planner.cpp
+  src/patching/patch_transaction.cpp
+  src/report/artifact_reader.cpp src/report/artifact_writer.cpp
+  src/system/process_spawn.cpp)
 target_include_directories(armflow PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 target_compile_features(armflow PUBLIC cxx_std_20)
 target_link_libraries(armflow PUBLIC nlohmann_json::nlohmann_json PRIVATE PkgConfig::GCRYPT PkgConfig::CAPSTONE PkgConfig::UNICORN yaml-cpp::yaml-cpp)
@@ -21,10 +34,6 @@ if(ARMFLOW_SANITIZE)
  target_link_options(armflow PUBLIC -fsanitize=address,undefined)
 endif()
 add_executable(arm-flow app/cli_main.cpp)
-target_sources(armflow PRIVATE src/app/pipeline_driver.cpp src/app/regression_checks.cpp src/app/batch_driver.cpp)
-target_sources(armflow PRIVATE src/emulation/call_shims.cpp src/emulation/trace_source.cpp)
-target_sources(armflow PRIVATE src/patching/cleanup_proposals.cpp)
-target_sources(armflow PRIVATE src/flow/state_expansion.cpp src/flow/table_graph.cpp)
 target_link_libraries(arm-flow PRIVATE armflow)
 include(CTest)
 if(BUILD_TESTING)
