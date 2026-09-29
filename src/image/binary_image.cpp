@@ -414,8 +414,11 @@ BinaryImage BinaryImage::from_snapshot(const JsonDoc &document) {
   result.validate();
   return result;
 }
+bool BinaryImage::looks_like_elf(std::span<const std::uint8_t> file) {
+  return file.size() >= 4 && little(file, 0, 4) == 0x464c457f;
+}
 BinaryImage BinaryImage::from_elf(std::span<const std::uint8_t> file) {
-  if (file.size() < 64 || little(file, 0, 4) != 0x464c457f || file[4] != 2 ||
+  if (file.size() < 64 || !looks_like_elf(file) || file[4] != 2 ||
       file[5] != 1 || file[6] != 1 || little(file, 18, 2) != 183)
     throw FlowError("expected a little-endian AArch64 ELF64 image");
   auto type = little(file, 16, 2);
@@ -541,7 +544,7 @@ BinaryImage BinaryImage::from_flat(std::span<const std::uint8_t> file,
 BinaryImage BinaryImage::load(const std::filesystem::path &path) {
   auto data = load_file(path);
   BinaryImage result;
-  if (data.size() >= 4 && little(data, 0, 4) == 0x464c457f)
+  if (looks_like_elf(data))
     result = from_elf(data);
   else
     result = from_snapshot(load_document(path));

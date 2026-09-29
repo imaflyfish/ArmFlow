@@ -66,6 +66,10 @@ public:
   JsonDoc snapshot() const;
   static BinaryImage from_snapshot(const JsonDoc &document);
   static BinaryImage from_elf(std::span<const std::uint8_t> file);
+  // True when the bytes open with the ELF magic. Callers route between an ELF
+  // and a snapshot document on this, and from_elf checks it again along with
+  // the rest of the header, so the magic is written in one place.
+  static bool looks_like_elf(std::span<const std::uint8_t> file);
   static BinaryImage from_flat(std::span<const std::uint8_t> file,
                                const JsonDoc &mapping);
   static BinaryImage load(const std::filesystem::path &path);

@@ -105,8 +105,7 @@ void guard_output(const std::filesystem::path &output,
 }
 BinaryImage load_current(const std::filesystem::path &path) {
   auto bytes = load_file(path);
-  if (bytes.size() >= 4 && bytes[0] == 0x7f && bytes[1] == 'E' &&
-      bytes[2] == 'L' && bytes[3] == 'F')
+  if (BinaryImage::looks_like_elf(bytes))
     return BinaryImage::from_elf(bytes);
   auto document = load_document(path);
   return BinaryImage::from_snapshot(
