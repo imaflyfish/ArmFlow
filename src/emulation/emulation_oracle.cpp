@@ -245,7 +245,8 @@ EmulationOracle::run(const BinaryImage &image, Address entry,
     return command_execution(specification_, image, entry, input, sites);
   auto limit = numeric(specification_, "maximum_instructions", 1000000),
        timeout = numeric(specification_, "timeout_microseconds", 1000000);
-  if (!limit || limit > 100000000 || !timeout || timeout > 60000000)
+  if (!limit || limit > maximum_executed_instructions || !timeout ||
+      timeout > 60000000)
     throw FlowError("invalid execution budget");
   uc_engine *raw = nullptr;
   checked(uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &raw), "open Unicorn");

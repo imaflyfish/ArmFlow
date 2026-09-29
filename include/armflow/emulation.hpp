@@ -12,6 +12,11 @@ struct EmulationResult {
   std::map<Address, std::set<Address>> control_edges;
   std::map<Address, std::map<std::uint64_t, std::set<Address>>> state_targets;
 };
+// The most instructions one execution may run. The native backend checks the
+// budget a configuration asks for against it, and the external backend checks
+// the count an oracle reports; a gap between the two would let one backend
+// accept a run the other refuses.
+inline constexpr std::uint64_t maximum_executed_instructions = 100000000;
 JsonDoc json_of_execution(const EmulationResult &result);
 EmulationResult execution_of_json(const JsonDoc &record,
                                   const BinaryImage &image);

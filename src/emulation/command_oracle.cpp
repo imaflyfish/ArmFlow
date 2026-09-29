@@ -47,7 +47,8 @@ EmulationResult execution_of_json(const JsonDoc &record,
     throw FlowError("oracle response output limit exceeded");
   result.returned = address_of_json(record.at("returned"));
   result.instructions = address_of_json(record.at("instructions"));
-  if (result.instructions == 0 || result.instructions > 100000000)
+  if (result.instructions == 0 ||
+      result.instructions > maximum_executed_instructions)
     throw FlowError("oracle response has invalid instruction count");
   result.observations.merge(record.at("observations"));
   const auto &coverage = record.at("coverage");
