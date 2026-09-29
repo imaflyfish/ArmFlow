@@ -4,9 +4,6 @@
 #include <set>
 namespace armflow {
 namespace {
-// Both liveness walks below follow branches through one function, so each
-// needs a ceiling on the instructions it visits before it gives up.
-constexpr unsigned maximum_walk_instructions = 1024;
 bool dead_before_read(const BinaryImage &image, const OpcodeDecoder &decoder,
                       Address begin, unsigned reg, bool flags = false) {
   std::deque<Address> pending{begin};

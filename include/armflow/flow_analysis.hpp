@@ -3,6 +3,10 @@
 #include <map>
 #include <set>
 namespace armflow {
+// How many instructions an analysis follows through control flow inside one
+// function before it gives up. Every bounded walk shares it: the liveness
+// walks in the branch planner and both walks the comparison-tree survey makes.
+inline constexpr unsigned maximum_walk_instructions = 1024;
 struct FlowSettings {
   unsigned lookback = 128, maximum_targets = 256;
   bool single_level = true, comparison_tree = true;

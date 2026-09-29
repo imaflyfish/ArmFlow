@@ -132,7 +132,7 @@ std::vector<SwitchSite> comparison_sites(const BinaryImage &image,
       site.parent_end = function.end;
       std::deque<Address> pending{head + 4};
       std::set<Address> visited;
-      unsigned budget = 1024;
+      unsigned budget = maximum_walk_instructions;
       while (!pending.empty() && budget) {
         Address position = pending.front();
         pending.pop_front();
@@ -218,7 +218,7 @@ std::vector<SwitchSite> comparison_sites(const BinaryImage &image,
         std::uint64_t loaded = state & 0xffffffff;
         if (site.state_slot->signed_value && (loaded & 0x80000000))
           loaded |= 0xffffffff00000000;
-        for (unsigned steps = 0; steps < 1024; ++steps) {
+        for (unsigned steps = 0; steps < maximum_walk_instructions; ++steps) {
           if (position < function.begin || position >= function.end ||
               !walked.insert(position).second)
             return {};
