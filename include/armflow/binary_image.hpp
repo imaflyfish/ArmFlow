@@ -20,8 +20,12 @@ Address address_of_json(const JsonDoc &value);
 ByteBuffer bytes_of_hex(const std::string &value);
 std::string hex_of_bytes(std::span<const std::uint8_t> value);
 std::string sha256_hex(std::span<const std::uint8_t> bytes);
+// The largest image, and the largest executable range within one, that this
+// product will map. The default read cap is the same bound, so a file that
+// cannot become an image is refused before it is held in memory.
+inline constexpr std::size_t maximum_image = 256 * 1024 * 1024;
 ByteBuffer load_file(const std::filesystem::path &path,
-                     std::size_t cap = 256 * 1024 * 1024);
+                     std::size_t cap = maximum_image);
 JsonDoc document_of_bytes(std::span<const std::uint8_t> bytes);
 JsonDoc load_document(const std::filesystem::path &path);
 void store_document(const std::filesystem::path &path, const JsonDoc &value);

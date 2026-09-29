@@ -370,8 +370,7 @@ FlowSettings FlowSettings::from_json(const JsonDoc &document,
       if (!bounds.is_array() || bounds.size() != 2)
         throw FlowError("region range requires two addresses");
       auto start = address_of_json(bounds[0]), end = address_of_json(bounds[1]);
-      if (start >= end || start % 4 || end % 4 ||
-          end - start > 256 * 1024 * 1024)
+      if (start >= end || start % 4 || end % 4 || end - start > maximum_image)
         throw FlowError("invalid executable range");
       auto region =
           image.region_at(start, static_cast<std::size_t>(end - start));

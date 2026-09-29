@@ -13,7 +13,6 @@
 #include <yaml-cpp/yaml.h>
 namespace armflow {
 namespace {
-constexpr std::size_t maximum_image = 256 * 1024 * 1024;
 // A configuration is the same document whether it is written as JSON or YAML,
 // so both readers stop at the same nesting depth. Their node budgets do differ
 // on purpose: YAML aliases expand during the load, so that reader keeps the
