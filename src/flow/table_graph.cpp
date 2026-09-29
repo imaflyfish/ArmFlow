@@ -14,8 +14,9 @@ JsonDoc extend_table_graph(const BinaryImage &image,
     return {{"enabled", false}};
   const auto maximum =
       address_of_json(options.value("maximum_entries", JsonDoc(256)));
-  if (!maximum || maximum > 65536)
-    throw FlowError("graph table entry cap must be in 1..65536");
+  if (!maximum || maximum > max_document_entries)
+    throw FlowError("graph table entry cap must be in 1.." +
+                    std::to_string(max_document_entries));
   std::set<Address> changed;
   for (const auto &edit : plan.edits)
     changed.insert(edit.site);

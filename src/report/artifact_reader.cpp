@@ -74,11 +74,11 @@ SwitchSite site_of_json(const JsonDoc &record) {
   result.index_access = memory(record, "index_access");
   result.target_access = memory(record, "target_access");
   const auto &arrivals = record.at("arrivals");
-  bounded_array(arrivals, 65536);
+  bounded_array(arrivals, max_document_entries);
   for (const auto &value : arrivals)
     result.arrivals.push_back(address_of_json(value));
   const auto &comparisons = record.at("comparisons");
-  if (!comparisons.is_object() || comparisons.size() > 65536)
+  if (!comparisons.is_object() || comparisons.size() > max_document_entries)
     throw FlowError("invalid comparison table");
   for (const auto &[state, target] : comparisons.items())
     result.comparisons.emplace(address_of_json(JsonDoc(state)),
@@ -142,7 +142,7 @@ BranchTransition transition_of_json(const JsonDoc &record) {
 ResolvedBranch branch_of_json(const JsonDoc &record) {
   ResolvedBranch result;
   result.transition = transition_of_json(record.at("transition"));
-  bounded_array(record.at("targets"), 65536);
+  bounded_array(record.at("targets"), max_document_entries);
   for (const auto &value : record["targets"]) {
     TargetEntry target;
     target.state = address_of_json(value.at("state"));

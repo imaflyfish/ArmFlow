@@ -25,6 +25,9 @@ ByteBuffer load_file(const std::filesystem::path &path,
 JsonDoc document_of_bytes(std::span<const std::uint8_t> bytes);
 JsonDoc load_document(const std::filesystem::path &path);
 void store_document(const std::filesystem::path &path, const JsonDoc &value);
+// The largest collection an artifact or configuration document may declare.
+// Every reader shares it, so one reader cannot accept a shape another refuses.
+inline constexpr std::size_t max_document_entries = 65536;
 
 struct ImageRegion {
   Address begin = 0;
