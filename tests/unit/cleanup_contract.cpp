@@ -1,24 +1,9 @@
+#include "../support/checks.hpp"
 #include <armflow/pipeline.hpp>
 #include <iostream>
 using namespace armflow;
+using namespace armflow_tests;
 namespace {
-unsigned passed = 0, failed = 0;
-void check(bool ok, const std::string &name) {
-  if (ok)
-    ++passed;
-  else {
-    ++failed;
-    std::cerr << "FAIL: " << name << '\n';
-  }
-}
-template <class F> void rejects(F action, const std::string &name) {
-  try {
-    action();
-    check(false, name);
-  } catch (const std::exception &) {
-    check(true, name);
-  }
-}
 BinaryImage fixture(std::initializer_list<std::uint32_t> words) {
   BinaryImage image;
   ImageRegion code;

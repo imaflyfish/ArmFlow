@@ -1,3 +1,4 @@
+#include "../support/checks.hpp"
 #include <algorithm>
 #include <armflow/emulation.hpp>
 #include <armflow/subprocess.hpp>
@@ -5,24 +6,8 @@
 #include <iostream>
 #include <limits>
 using namespace armflow;
+using namespace armflow_tests;
 namespace {
-unsigned passed = 0, failed = 0;
-void check(bool value, const std::string &name) {
-  if (value)
-    ++passed;
-  else {
-    ++failed;
-    std::cerr << "FAIL: " << name << '\n';
-  }
-}
-template <class F> void rejects(F action, const std::string &name) {
-  try {
-    action();
-    check(false, name);
-  } catch (const FlowError &) {
-    check(true, name);
-  }
-}
 class ShimMemory final : public ShimContext {
 public:
   ByteBuffer memory = ByteBuffer(262144, 0);
@@ -104,15 +89,17 @@ int main(int argc, char **argv) {
     memory.invoke("memmove", {0x1002, 0x1000, 6});
     check(memory.text(0x1000) == "ababcdef",
           "overlapping move stages its input");
-    rejects([&] { memory.invoke("__memcpy_chk", {0x1100, 0x1000, 9, 8}); },
-            "checked copy rejects insufficient destination");
+    rejects<FlowError>(
+        [&] { memory.invoke("__memcpy_chk", {0x1100, 0x1000, 9, 8}); },
+        "checked copy rejects insufficient destination");
     for (const auto &name : {"memset", "__memset_chk"}) {
       memory.invoke(name, {0x1100, 'Z', 4, 4});
       check(memory.read(0x1100, 4) == bytes("ZZZZ"),
             "fill model: " + std::string(name));
     }
-    rejects([&] { memory.invoke("__memset_chk", {0x1100, 0, 5, 4}); },
-            "checked fill enforces object bound");
+    rejects<FlowError>(
+        [&] { memory.invoke("__memset_chk", {0x1100, 0, 5, 4}); },
+        "checked fill enforces object bound");
     memory.text(0x1200, "hello");
     memory.text(0x1300, "help");
     memory.invoke("strlen", {0x1200});
@@ -124,8 +111,8 @@ int main(int argc, char **argv) {
     check(memory.returned == 0, "strncmp obeys count");
     memory.invoke("strncmp", {std::numeric_limits<std::uint64_t>::max(), 0, 0});
     check(memory.returned == 0, "zero-length compare reads no memory");
-    rejects([&] { memory.invoke("strlen", {0x50000}); },
-            "invalid string pointer is not silently accepted");
+    rejects<FlowError>([&] { memory.invoke("strlen", {0x50000}); },
+                       "invalid string pointer is not silently accepted");
     memory.invoke("malloc", {8});
     auto old = memory.returned;
     memory.write(old, bytes("12345678"));
@@ -140,28 +127,29 @@ int main(int argc, char **argv) {
           "realloc shrink copies bounded prefix");
     memory.invoke("free", {shrunk});
     check(!memory.live.contains(shrunk), "free retires allocation");
-    rejects([&] { memory.invoke("free", {shrunk}); },
-            "double-free is explicit failure");
+    rejects<FlowError>([&] { memory.invoke("free", {shrunk}); },
+                       "double-free is explicit failure");
     memory.invoke("free", {0});
     check(memory.returned == 0, "free null is accepted");
     memory.invoke("calloc", {4, 8});
     check(memory.read(memory.returned, 32) == ByteBuffer(32, 0),
           "calloc zeroes complete allocation");
-    rejects(
+    rejects<FlowError>(
         [&] {
           memory.invoke("calloc",
                         {std::numeric_limits<std::uint64_t>::max(), 16});
         },
         "calloc multiplication overflow rejected");
-    rejects([&] { memory.invoke("memcpy", {0x1000, 0x1100, 1024 * 1024 + 1}); },
-            "copy bounded before allocating buffer");
+    rejects<FlowError>(
+        [&] { memory.invoke("memcpy", {0x1000, 0x1100, 1024 * 1024 + 1}); },
+        "copy bounded before allocating buffer");
     for (const auto &name : {"pthread_mutex_lock", "pthread_mutex_unlock"}) {
       memory.invoke(name, {0});
       check(memory.returned == 0, "explicit single-thread mutex model");
     }
     for (const auto &name : {"abort", "__stack_chk_fail"})
-      rejects([&] { memory.invoke(name, {}); },
-              "terminating model throws instead of returning");
+      rejects<FlowError>([&] { memory.invoke(name, {}); },
+                         "terminating model throws instead of returning");
     // AAPCS64 register save area followed by stack arguments. Compare integer
     // and string formatting against the host C library on the same independent
     // data.
@@ -195,31 +183,31 @@ int main(int argc, char **argv) {
     check(memory.memory[0x1100] == 0x7e &&
               memory.returned == std::string(reference).size(),
           "zero-capacity snprintf writes no byte");
-    rejects(
+    rejects<FlowError>(
         [&] {
           memory.invoke("__vsprintf_chk", {0x1000, 0, 2, 0x3000, 0x2000});
         },
         "checked unbounded format rejects object overflow");
-    rejects(
+    rejects<FlowError>(
         [&] {
           memory.invoke("__vsnprintf_chk", {0x1000, 8, 0, 4, 0x3000, 0x2000});
         },
         "snprintf requested capacity cannot exceed object size");
     memory.text(0x3000, "%n");
-    rejects(
+    rejects<FlowError>(
         [&] {
           memory.invoke("__vsprintf_chk", {0x1000, 0, 256, 0x3000, 0x2000});
         },
         "unsupported percent-n is explicit failure");
     memory.word(0x2018, 0xfffffffe, 4);
     memory.text(0x3000, "%d");
-    rejects(
+    rejects<FlowError>(
         [&] {
           memory.invoke("__vsprintf_chk", {0x1000, 0, 256, 0x3000, 0x2000});
         },
         "misaligned va_list rejected");
-    rejects([&] { ShimRegistry::standard()->lookup("missing"); },
-            "unknown modeled call is explicit failure");
+    rejects<FlowError>([&] { ShimRegistry::standard()->lookup("missing"); },
+                       "unknown modeled call is explicit failure");
     // Real independently assembled instructions use the native Unicorn import
     // hook.
     const auto image = BinaryImage::load(argv[1]);
@@ -264,8 +252,9 @@ int main(int argc, char **argv) {
           "native memset output buffer");
     for (const auto &name :
          {"checked_copy_bad", "abort_path", "copy_to_readonly"})
-      rejects([&] { oracle.run(image, named(image, name), bytes("abcdefgh")); },
-              "native call failure propagated: " + std::string(name));
+      rejects<FlowError>(
+          [&] { oracle.run(image, named(image, name), bytes("abcdefgh")); },
+          "native call failure propagated: " + std::string(name));
     auto coverage =
         oracle.run(image, named(image, "string_length"), bytes("hello"));
     check(!coverage.executed.contains(named(image, "imported_strlen")),
@@ -281,7 +270,7 @@ int main(int argc, char **argv) {
                   .run(image, named(image, "custom_call"), ByteBuffer{7})
                   .returned == 107,
           "native library supports a caller-supplied model registry");
-    rejects(
+    rejects<FlowError>(
         [&] {
           EmulationOracle(custom).run(image, named(image, "custom_call"),
                                       ByteBuffer{7});
@@ -299,12 +288,14 @@ int main(int argc, char **argv) {
           "configurable helper sizes and canary");
     auto invalid = narrow;
     invalid["memory"]["canary_offset"] = 4092;
-    rejects([&] { EmulationOracle(invalid).run(image, image.entry, {}); },
-            "TLS canary cannot cross mapping");
+    rejects<FlowError>(
+        [&] { EmulationOracle(invalid).run(image, image.entry, {}); },
+        "TLS canary cannot cross mapping");
     invalid = narrow;
     invalid["memory"]["stack_size"] = 123;
-    rejects([&] { EmulationOracle(invalid).run(image, image.entry, {}); },
-            "misaligned helper size rejected");
+    rejects<FlowError>(
+        [&] { EmulationOracle(invalid).run(image, image.entry, {}); },
+        "misaligned helper size rejected");
     // The separately running command backend receives the same import contract.
     auto external = spec;
     external["backend"] = "command";
@@ -393,9 +384,10 @@ int main(int argc, char **argv) {
     for (auto target : {0x101100, 0x101180, 0x101220}) {
       auto denied = write_spec;
       denied["registers"]["X0"] = target;
-      rejects([&] { EmulationOracle(denied).run(modeled_image, 0x100000, {}); },
-              "modeled write rejects sub-page read-only memory or padding " +
-                  format_address(target));
+      rejects<FlowError>(
+          [&] { EmulationOracle(denied).run(modeled_image, 0x100000, {}); },
+          "modeled write rejects sub-page read-only memory or padding " +
+              format_address(target));
     }
     check(EmulationOracle(write_spec).run(modeled_image, 0x100000, {}).output ==
               bytes("A"),
@@ -403,13 +395,14 @@ int main(int argc, char **argv) {
     auto spanning = write_spec;
     spanning["registers"]["X0"] = "0x10121f";
     spanning["registers"]["X2"] = 2;
-    rejects([&] { EmulationOracle(spanning).run(modeled_image, 0x100000, {}); },
-            "modeled write cannot cross a region end into page padding");
+    rejects<FlowError>(
+        [&] { EmulationOracle(spanning).run(modeled_image, 0x100000, {}); },
+        "modeled write cannot cross a region end into page padding");
     auto read_spec = write_spec;
     read_spec["imports"] = {{"memcpy", "0x200000"}};
     for (auto source : {0x101180, 0x101300}) {
       read_spec["registers"]["X1"] = source;
-      rejects(
+      rejects<FlowError>(
           [&] { EmulationOracle(read_spec).run(modeled_image, 0x100000, {}); },
           "modeled read rejects unmapped or unreadable sub-page region " +
               format_address(source));
@@ -423,7 +416,7 @@ int main(int argc, char **argv) {
     store_spec.erase("imports");
     for (auto target : {0x101100, 0x101180}) {
       store_spec["registers"]["X0"] = target;
-      rejects(
+      rejects<FlowError>(
           [&] { EmulationOracle(store_spec).run(store_image, 0x100000, {}); },
           "guest store rejects read-only or unmapped sub-page region " +
               format_address(target));
@@ -436,9 +429,10 @@ int main(int argc, char **argv) {
     JsonDoc load_spec = {{"registers", {{"X0", "0x101100"}}}};
     for (auto source : {0x101180, 0x101300}) {
       load_spec["registers"]["X0"] = source;
-      rejects([&] { EmulationOracle(load_spec).run(load_image, 0x100000, {}); },
-              "guest load rejects unmapped or unreadable sub-page region " +
-                  format_address(source));
+      rejects<FlowError>(
+          [&] { EmulationOracle(load_spec).run(load_image, 0x100000, {}); },
+          "guest load rejects unmapped or unreadable sub-page region " +
+              format_address(source));
     }
     load_spec["registers"]["X0"] = "0x101100";
     check(EmulationOracle(load_spec).run(load_image, 0x100000, {}).returned ==
@@ -446,7 +440,7 @@ int main(int argc, char **argv) {
           "guest load retains valid read-only sub-page access");
     const auto crossing_image = mapped_image({0xf9400000, 0xd65f03c0});
     load_spec["registers"]["X0"] = "0x10121f";
-    rejects(
+    rejects<FlowError>(
         [&] { EmulationOracle(load_spec).run(crossing_image, 0x100000, {}); },
         "guest load cannot cross a region end into page padding");
     load_spec["registers"]["X0"] = "0x10120c";
@@ -458,14 +452,14 @@ int main(int argc, char **argv) {
     JsonDoc output_spec = {{"output", {{"mode", "region"}, {"length", 1}}}};
     for (auto source : {0x101180, 0x101300}) {
       output_spec["output"]["address"] = source;
-      rejects(
+      rejects<FlowError>(
           [&] { EmulationOracle(output_spec).run(return_image, 0x100000, {}); },
           "output extraction rejects unmapped or unreadable sub-page region " +
               format_address(source));
     }
     output_spec["output"]["address"] = "0x10121f";
     output_spec["output"]["length"] = 2;
-    rejects(
+    rejects<FlowError>(
         [&] { EmulationOracle(output_spec).run(return_image, 0x100000, {}); },
         "output extraction cannot cross a region end into page padding");
     output_spec["output"]["address"] = "0x10120f";
@@ -473,7 +467,7 @@ int main(int argc, char **argv) {
               bytes("AB"),
           "output extraction may span contiguous readable regions");
     const auto branch_image = mapped_image({0xd61f0000});
-    rejects(
+    rejects<FlowError>(
         [&] {
           EmulationOracle({{"registers", {{"X0", "0x100100"}}}})
               .run(branch_image, 0x100000, {});
@@ -483,7 +477,7 @@ int main(int argc, char **argv) {
     external_denied["backend"] = "command";
     external_denied["command"] = JsonDoc::array({argv[2]});
     external_denied["registers"]["X0"] = "0x101100";
-    rejects(
+    rejects<FlowError>(
         [&] {
           EmulationOracle(external_denied).run(modeled_image, 0x100000, {});
         },

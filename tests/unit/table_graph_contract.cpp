@@ -1,24 +1,9 @@
+#include "../support/checks.hpp"
 #include <armflow/patching.hpp>
 #include <iostream>
 using namespace armflow;
+using namespace armflow_tests;
 namespace {
-unsigned passed = 0, failed = 0;
-void check(bool value, const char *name) {
-  if (value)
-    ++passed;
-  else {
-    ++failed;
-    std::cerr << "FAIL: " << name << '\n';
-  }
-}
-template <class F> void rejects(F action, const char *name) {
-  try {
-    action();
-    check(false, name);
-  } catch (const std::exception &) {
-    check(true, name);
-  }
-}
 void put(BinaryImage &image, Address at, Address value) {
   ByteBuffer bytes(8);
   for (unsigned i = 0; i < 8; ++i)

@@ -1,26 +1,11 @@
+#include "../support/checks.hpp"
 #include <armflow/pipeline.hpp>
 #include <armflow/subprocess.hpp>
 #include <fstream>
 #include <iostream>
 using namespace armflow;
+using namespace armflow_tests;
 namespace {
-unsigned passed = 0, failed = 0;
-void check(bool value, const std::string &name) {
-  if (value)
-    ++passed;
-  else {
-    ++failed;
-    std::cerr << "FAIL: " << name << '\n';
-  }
-}
-template <class F> void rejects(F action, const std::string &name) {
-  try {
-    action();
-    check(false, name);
-  } catch (const std::exception &) {
-    check(true, name);
-  }
-}
 Address named(const BinaryImage &image, const std::string &name) {
   for (const auto &fn : image.functions)
     if (fn.label == name)

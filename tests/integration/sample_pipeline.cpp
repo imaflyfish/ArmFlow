@@ -1,16 +1,9 @@
+#include "../support/checks.hpp"
 #include <armflow/patching.hpp>
 #include <iostream>
 using namespace armflow;
+using namespace armflow_tests;
 namespace {
-unsigned passed = 0, failed = 0;
-void check(bool value, const std::string &name) {
-  if (value)
-    ++passed;
-  else {
-    ++failed;
-    std::cerr << "FAIL: " << name << '\n';
-  }
-}
 Address entry(const BinaryImage &image, const std::string &name) {
   for (const auto &function : image.functions)
     if (function.label == name)

@@ -1,25 +1,9 @@
+#include "../support/checks.hpp"
 #include <armflow/opcode.hpp>
 #include <iostream>
 using namespace armflow;
+using namespace armflow_tests;
 namespace {
-unsigned passed = 0, failed = 0;
-void check(bool value, const std::string &label) {
-  if (value)
-    ++passed;
-  else {
-    ++failed;
-    std::cerr << "FAIL: " << label << '\n';
-  }
-}
-template <typename Function>
-void rejects(Function action, const std::string &label) {
-  try {
-    action();
-    check(false, label);
-  } catch (const std::exception &) {
-    check(true, label);
-  }
-}
 BinaryImage code(std::initializer_list<std::uint32_t> words) {
   BinaryImage image;
   ImageRegion region;

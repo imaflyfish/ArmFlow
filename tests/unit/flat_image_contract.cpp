@@ -1,27 +1,11 @@
+#include "../support/checks.hpp"
 #include <armflow/emulation.hpp>
 #include <armflow/subprocess.hpp>
 #include <fstream>
 #include <iostream>
 using namespace armflow;
-namespace {
-unsigned passed = 0, failed = 0;
-void check(bool ok, const std::string &name) {
-  if (ok)
-    ++passed;
-  else {
-    ++failed;
-    std::cerr << "FAIL: " << name << '\n';
-  }
-}
-template <class F> void rejects(F action, const std::string &name) {
-  try {
-    action();
-    check(false, name);
-  } catch (const std::exception &) {
-    check(true, name);
-  }
-}
-} // namespace
+using namespace armflow_tests;
+namespace {} // namespace
 int main(int argc, char **argv) {
   if (argc != 2)
     return 2;

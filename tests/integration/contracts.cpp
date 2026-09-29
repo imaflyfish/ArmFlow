@@ -1,3 +1,4 @@
+#include "../support/checks.hpp"
 #include <algorithm>
 #include <armflow/patching.hpp>
 #include <armflow/subprocess.hpp>
@@ -5,25 +6,8 @@
 #include <iostream>
 #include <unistd.h>
 using namespace armflow;
+using namespace armflow_tests;
 namespace {
-unsigned passed = 0, failed = 0;
-void check(bool value, const std::string &message) {
-  if (value)
-    ++passed;
-  else {
-    ++failed;
-    std::cerr << "FAIL: " << message << '\n';
-  }
-}
-template <typename Function>
-void rejects(Function action, const std::string &message) {
-  try {
-    action();
-    check(false, message);
-  } catch (const std::exception &) {
-    check(true, message);
-  }
-}
 JsonDoc parse(const std::string &text) {
   return document_of_bytes(
       {reinterpret_cast<const std::uint8_t *>(text.data()), text.size()});
