@@ -14,6 +14,11 @@
 namespace armflow {
 namespace {
 constexpr std::size_t maximum_image = 256 * 1024 * 1024;
+// A configuration is the same document whether it is written as JSON or YAML,
+// so both readers stop at the same nesting depth. Their node budgets do differ
+// on purpose: YAML aliases expand during the load, so that reader keeps the
+// tighter budget and an explicit sequence cap.
+constexpr unsigned maximum_document_depth = 64;
 std::uint64_t little(std::span<const std::uint8_t> view, std::uint64_t offset,
                      unsigned width) {
   if (width == 0 || width > 8 || offset > view.size() ||
@@ -48,7 +53,7 @@ JsonDoc yaml_value(const YAML::Node &node, std::size_t &remaining,
   if (remaining == 0)
     throw FlowError("YAML node limit exceeded");
   --remaining;
-  if (depth > 40)
+  if (depth > maximum_document_depth)
     throw FlowError("YAML nesting limit exceeded");
   if (node.IsNull())
     return nullptr;
@@ -189,12 +194,14 @@ JsonDoc load_document(const std::filesystem::path &path) {
 JsonDoc document_of_bytes(std::span<const std::uint8_t> bytes) {
   if (bytes.size() > maximum_image * 2)
     throw FlowError("document size limit exceeded");
-  std::vector<std::set<std::string>> keys(65);
+  // One key set per depth the callback may report, indexed by depth - 1.
+  std::vector<std::set<std::string>> keys(maximum_document_depth + 1);
   std::size_t events = 0;
   return JsonDoc::parse(
       bytes.begin(), bytes.end(),
       [&](int depth, JsonDoc::parse_event_t event, JsonDoc &value) {
-        if (depth < 0 || depth > 64 || ++events > 4000000)
+        if (depth < 0 || depth > int(maximum_document_depth) ||
+            ++events > 4000000)
           throw FlowError("JSON structural limit exceeded");
         if (event == JsonDoc::parse_event_t::object_start)
           keys[static_cast<std::size_t>(depth)].clear();
