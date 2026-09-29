@@ -3,8 +3,7 @@ namespace armflow {
 JsonDoc PipelineDriver::execute_batch(bool apply) {
   JsonDoc tasks = configuration_.value("jobs", JsonDoc::array());
   if (!tasks.is_array() || tasks.size() > 10000)
-    throw FlowError(
-        "jobs requires at most 10000 independent configurations");
+    throw FlowError("jobs requires at most 10000 independent configurations");
   if (tasks.empty()) {
     analyze(1);
     std::map<Address, std::set<Address>> grouped;
@@ -14,7 +13,8 @@ JsonDoc PipelineDriver::execute_batch(bool apply) {
       JsonDoc functions = JsonDoc::array();
       for (auto entry : entries)
         functions.push_back(format_address(entry));
-      tasks.push_back({{"name", format_address(key)}, {"functions", functions}});
+      tasks.push_back(
+          {{"name", format_address(key)}, {"functions", functions}});
     }
   }
   auto report = envelope("batch");

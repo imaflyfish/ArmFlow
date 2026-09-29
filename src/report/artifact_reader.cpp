@@ -8,7 +8,8 @@ std::optional<Address> optional_address(const JsonDoc &record,
     return {};
   return address_of_json(record[key]);
 }
-std::int64_t integer(const JsonDoc &value, std::int64_t low, std::int64_t high) {
+std::int64_t integer(const JsonDoc &value, std::int64_t low,
+                     std::int64_t high) {
   if (!value.is_number_integer())
     throw FlowError("artifact integer field has a non-integer value");
   if (value.is_number_unsigned() &&
@@ -21,7 +22,7 @@ std::int64_t integer(const JsonDoc &value, std::int64_t low, std::int64_t high) 
   return result;
 }
 std::optional<MemoryAccess> memory(const JsonDoc &record,
-                                    const std::string &key) {
+                                   const std::string &key) {
   if (!record.contains(key) || record[key].is_null())
     return {};
   const auto &value = record[key];
@@ -56,8 +57,7 @@ SwitchSite site_of_json(const JsonDoc &record) {
   if (result.parent >= result.parent_end || result.branch < result.parent ||
       result.branch >= result.parent_end || result.branch % 4 ||
       result.head % 4)
-    throw FlowError(
-        "dispatch site has invalid parent or instruction bounds");
+    throw FlowError("dispatch site has invalid parent or instruction bounds");
   result.load_index = optional_address(record, "index_load");
   result.load_state = optional_address(record, "state_load");
   result.target_table = optional_address(record, "target_table");
@@ -136,8 +136,7 @@ BranchTransition transition_of_json(const JsonDoc &record) {
     throw FlowError("constant transition has multiple values");
   if (result.category == "choice" &&
       (result.state->values.size() != 2 || result.predicate.is_null()))
-    throw FlowError(
-        "choice transition requires two values and a predicate");
+    throw FlowError("choice transition requires two values and a predicate");
   return result;
 }
 ResolvedBranch branch_of_json(const JsonDoc &record) {

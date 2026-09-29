@@ -31,26 +31,26 @@ int main(int argc, char **argv) {
     file[1] = 0x42;
     file[2] = 0x43;
     file[3] = 0x44;
-    auto nop = word_bytes(0xd503201f),
-         ret = word_bytes(0xd65f03c0);
+    auto nop = word_bytes(0xd503201f), ret = word_bytes(0xd65f03c0);
     std::copy(nop.begin(), nop.end(), file.begin() + 16);
     std::copy(ret.begin(), ret.end(), file.begin() + 20);
-    JsonDoc mapping = {{"entry", "0x1000"},
-                    {"relocated", true},
-                    {"regions", JsonDoc::array({{{"begin", "0x1000"},
-                                              {"offset", 16},
-                                              {"size", 8},
-                                              {"label", "code"},
-                                              {"executable", true}},
-                                             {{"begin", "0x2000"},
-                                              {"offset", 0},
-                                              {"size", 16},
-                                              {"file_size", 4},
-                                              {"label", "data"},
-                                              {"writable", true}}})},
-                    {"functions", JsonDoc::array({{{"begin", "0x1000"},
-                                                {"end", "0x1008"},
-                                                {"label", "identity"}}})}};
+    JsonDoc mapping = {
+        {"entry", "0x1000"},
+        {"relocated", true},
+        {"regions", JsonDoc::array({{{"begin", "0x1000"},
+                                     {"offset", 16},
+                                     {"size", 8},
+                                     {"label", "code"},
+                                     {"executable", true}},
+                                    {{"begin", "0x2000"},
+                                     {"offset", 0},
+                                     {"size", 16},
+                                     {"file_size", 4},
+                                     {"label", "data"},
+                                     {"writable", true}}})},
+        {"functions", JsonDoc::array({{{"begin", "0x1000"},
+                                       {"end", "0x1008"},
+                                       {"label", "identity"}}})}};
     auto image = BinaryImage::from_flat(file, mapping);
     check(image.regions.size() == 2 && image.functions.size() == 1,
           "explicit flat mappings and function ownership");
@@ -116,7 +116,8 @@ int main(int argc, char **argv) {
     bad = mapping;
     bad["regions"][1]["offset"] = 24;
     bad["regions"][1]["file_size"] = 0;
-    check(BinaryImage::from_flat(file, bad).read(0x2000, 16) == ByteBuffer(16, 0),
+    check(BinaryImage::from_flat(file, bad).read(0x2000, 16) ==
+              ByteBuffer(16, 0),
           "explicit zero initialized region may start at file end");
     ScratchDirectory temporary;
     auto input = temporary.path() / "image.bin";
@@ -130,13 +131,14 @@ int main(int argc, char **argv) {
         {"flat", mapping},
         {"executable_regions", JsonDoc::array({{{"label", "code"}}})},
         {"execution",
-         {{"known_vectors", JsonDoc::array({{{"entry", "0x1000"},
-                                          {"input", "25"},
-                                          {"output", "2500000000000000"}}})}}}};
+         {{"known_vectors",
+           JsonDoc::array({{{"entry", "0x1000"},
+                            {"input", "25"},
+                            {"output", "2500000000000000"}}})}}}};
     store_document(temporary.path() / "job.json", config);
     auto cli = spawn_process({argv[1], "verify", "--config",
-                            (temporary.path() / "job.json").string()},
-                           {}, 30000);
+                              (temporary.path() / "job.json").string()},
+                             {}, 30000);
     check(cli.exit_code == 0 &&
               document_of_bytes(cli.output).at("passed").get<bool>(),
           "CLI verifies flat mapping with config-relative input file");

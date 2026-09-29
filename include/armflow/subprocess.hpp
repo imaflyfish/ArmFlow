@@ -6,9 +6,9 @@ struct CommandOutcome {
   ByteBuffer output, errors;
 };
 CommandOutcome spawn_process(const std::vector<std::string> &arguments,
-                          std::span<const std::uint8_t> input,
-                          unsigned timeout_milliseconds = 30000,
-                          std::size_t maximum_output = 8 * 1024 * 1024);
+                             std::span<const std::uint8_t> input,
+                             unsigned timeout_milliseconds = 30000,
+                             std::size_t maximum_output = 8 * 1024 * 1024);
 class ScratchDirectory {
 public:
   ScratchDirectory();

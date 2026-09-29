@@ -1,12 +1,12 @@
-#include <armflow/flow_analysis.hpp>
 #include <algorithm>
+#include <armflow/flow_analysis.hpp>
 #include <deque>
 #include <limits>
 namespace armflow {
 namespace {
 std::optional<DecodedWord> instruction_at(const BinaryImage &image,
-                                              const OpcodeDecoder &decoder,
-                                              Address address) {
+                                          const OpcodeDecoder &decoder,
+                                          Address address) {
   auto word = image.instruction(address);
   return word ? std::optional<DecodedWord>(decoder.decode(address, *word))
               : std::nullopt;
@@ -99,8 +99,8 @@ void arrivals(SwitchSite &site, const BinaryImage &image,
       site.detail["interior_entry"] = true;
 }
 std::vector<SwitchSite> comparison_sites(const BinaryImage &image,
-                                           const OpcodeDecoder &decoder,
-                                           const FlowSettings &settings) {
+                                         const OpcodeDecoder &decoder,
+                                         const FlowSettings &settings) {
   std::vector<SwitchSite> result;
   ConstantWalker tracker(image, decoder, settings.lookback);
   for (const auto &function : image.functions) {
@@ -317,11 +317,12 @@ std::vector<SwitchSite> comparison_sites(const BinaryImage &image,
 }
 } // namespace
 FlowSettings FlowSettings::from_json(const JsonDoc &document,
-                                             const BinaryImage &image) {
+                                     const BinaryImage &image) {
   FlowSettings settings;
   settings.raw = document;
   auto analysis = document.value("analysis", JsonDoc::object());
-  const auto lookback = address_of_json(analysis.value("lookback", JsonDoc(128u)));
+  const auto lookback =
+      address_of_json(analysis.value("lookback", JsonDoc(128u)));
   const auto maximum_targets =
       address_of_json(analysis.value("maximum_targets", JsonDoc(256u)));
   settings.single_level = analysis.value("single_level", true);
@@ -410,8 +411,8 @@ void gather_direct_edges(BinaryImage &image, const OpcodeDecoder &decoder) {
       }
 }
 std::vector<SwitchSite> survey_switches(const BinaryImage &image,
-                                          const OpcodeDecoder &decoder,
-                                          const FlowSettings &settings) {
+                                        const OpcodeDecoder &decoder,
+                                        const FlowSettings &settings) {
   std::vector<SwitchSite> result;
   ConstantWalker tracker(image, decoder, settings.lookback);
   for (const auto &region : image.regions)
@@ -429,9 +430,8 @@ std::vector<SwitchSite> survey_switches(const BinaryImage &image,
         if (!producer)
           continue;
         auto target = instruction_at(image, decoder, *producer);
-        if (!target || target->operation != Mnemonic::load ||
-            !target->memory || target->memory->width != 8 ||
-            target->memory->index < 0)
+        if (!target || target->operation != Mnemonic::load || !target->memory ||
+            target->memory->width != 8 || target->memory->index < 0)
           continue;
         SwitchSite site;
         site.model = "single_level";

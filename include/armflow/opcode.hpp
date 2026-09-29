@@ -70,8 +70,9 @@ public:
 private:
   std::size_t handle_ = 0;
 };
-std::optional<std::uint64_t> bitmask_immediate(unsigned width, unsigned high_bit,
-                                          unsigned rotate, unsigned ones);
+std::optional<std::uint64_t> bitmask_immediate(unsigned width,
+                                               unsigned high_bit,
+                                               unsigned rotate, unsigned ones);
 std::optional<std::uint32_t> direct_branch(Address from, Address to);
 std::optional<std::uint32_t> conditional_branch(Address from, Address to,
                                                 unsigned condition);
@@ -89,9 +90,9 @@ struct ConstantFact {
 class ConstantWalker {
 public:
   ConstantWalker(const BinaryImage &image, const OpcodeDecoder &decoder,
-                  unsigned window = 128, unsigned depth = 16);
+                 unsigned window = 128, unsigned depth = 16);
   std::optional<ConstantFact> resolve(Address use, unsigned reg,
-                                       unsigned width = 32) const;
+                                      unsigned width = 32) const;
   std::optional<Address> producer(Address use, unsigned reg) const;
 
 private:
@@ -99,6 +100,6 @@ private:
   const OpcodeDecoder &decoder_;
   unsigned window_, depth_;
   std::optional<ConstantFact> derive(Address use, unsigned reg, unsigned width,
-                                      unsigned depth, unsigned &budget) const;
+                                     unsigned depth, unsigned &budget) const;
 };
 } // namespace armflow

@@ -97,8 +97,7 @@ OpcodeDecoder::~OpcodeDecoder() {
   csh instance = handle_;
   cs_close(&instance);
 }
-DecodedWord OpcodeDecoder::decode(Address address,
-                                           std::uint32_t word) const {
+DecodedWord OpcodeDecoder::decode(Address address, std::uint32_t word) const {
   DecodedWord result;
   result.address = address;
   result.encoding = word;
@@ -235,7 +234,7 @@ DecodedWord OpcodeDecoder::decode(Address address,
         : kind == 2 ? Mnemonic::bit_xor
                     : Mnemonic::bit_and);
     result.immediate = bitmask_immediate(result.width, (word >> 22) & 1,
-                                    (word >> 16) & 63, (word >> 10) & 63);
+                                         (word >> 16) & 63, (word >> 10) & 63);
     result.right = -1;
     result.observable = false;
     if (!result.immediate) {
@@ -317,8 +316,9 @@ DecodedWord OpcodeDecoder::decode(Address address,
   }
   return result;
 }
-std::optional<std::uint64_t> bitmask_immediate(unsigned width, unsigned high_bit,
-                                          unsigned rotate, unsigned ones) {
+std::optional<std::uint64_t> bitmask_immediate(unsigned width,
+                                               unsigned high_bit,
+                                               unsigned rotate, unsigned ones) {
   if ((width != 32 && width != 64) || high_bit > 1 || rotate > 63 ||
       ones > 63 || (width == 32 && high_bit))
     return {};

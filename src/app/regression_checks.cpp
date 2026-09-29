@@ -1,8 +1,8 @@
 #include <armflow/patching.hpp>
 namespace armflow {
 JsonDoc verify_plan_expectations(const BinaryImage &candidate,
-                             const PatchPlan &plan,
-                             const JsonDoc &expectations) {
+                                 const PatchPlan &plan,
+                                 const JsonDoc &expectations) {
   if (!expectations.is_object())
     throw FlowError("regression expectations require an object");
   JsonDoc rows = JsonDoc::array();
@@ -30,8 +30,9 @@ JsonDoc verify_plan_expectations(const BinaryImage &candidate,
       std::set<std::tuple<Address, Address, std::string>> out;
       for (const auto &value : values) {
         const auto site = address_of_json(value.at("site"));
-        const auto arrival =
-            value.contains("arrival") ? address_of_json(value.at("arrival")) : 0;
+        const auto arrival = value.contains("arrival")
+                                 ? address_of_json(value.at("arrival"))
+                                 : 0;
         const auto reason = value.at("reason").get<std::string>();
         if (!out.emplace(site, arrival, reason).second)
           throw FlowError("duplicate expected skip");
@@ -41,7 +42,8 @@ JsonDoc verify_plan_expectations(const BinaryImage &candidate,
     record("expected_skips", normalize(expected) == normalize(plan.skipped),
            {{"expected", expected}, {"actual", plan.skipped}});
   }
-  const auto samples = expectations.value("instruction_samples", JsonDoc::array());
+  const auto samples =
+      expectations.value("instruction_samples", JsonDoc::array());
   if (!samples.is_array() || samples.size() > 10000)
     throw FlowError("instruction_samples must be a bounded array");
   OpcodeDecoder decoder;
@@ -57,8 +59,8 @@ JsonDoc verify_plan_expectations(const BinaryImage &candidate,
       const auto view = decoder.decode(address, *word);
       actual["word"] = format_address(*word);
       actual["operation"] = mnemonic_name(view.operation);
-      actual["target"] =
-          view.target ? JsonDoc(format_address(*view.target)) : JsonDoc(nullptr);
+      actual["target"] = view.target ? JsonDoc(format_address(*view.target))
+                                     : JsonDoc(nullptr);
       ok = view.valid;
       if (sample.contains("word"))
         ok = ok && *word == address_of_json(sample.at("word"));

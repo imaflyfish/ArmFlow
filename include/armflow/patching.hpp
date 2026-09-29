@@ -16,27 +16,29 @@ struct PatchPlan {
 };
 PatchPlan plan_of_json(const JsonDoc &record);
 PatchPlan plan_filler_cleanup(const BinaryImage &image,
-                         const OpcodeDecoder &decoder,
-                         const FlowSettings &settings);
-PatchPlan plan_patches(const BinaryImage &image,
-                          const OpcodeDecoder &decoder,
-                          const FlowSettings &settings,
-                          const std::vector<SwitchSite> &sites,
-                          const std::vector<ResolvedBranch> &flows,
-                          const SurveyObservations &observed);
+                              const OpcodeDecoder &decoder,
+                              const FlowSettings &settings);
+PatchPlan plan_patches(const BinaryImage &image, const OpcodeDecoder &decoder,
+                       const FlowSettings &settings,
+                       const std::vector<SwitchSite> &sites,
+                       const std::vector<ResolvedBranch> &flows,
+                       const SurveyObservations &observed);
 JsonDoc extend_table_graph(const BinaryImage &image,
-                        const FlowSettings &settings,
-                        const std::vector<SwitchSite> &sites,
-                        PatchPlan &plan);
+                           const FlowSettings &settings,
+                           const std::vector<SwitchSite> &sites,
+                           PatchPlan &plan);
 JsonDoc verify_plan_expectations(const BinaryImage &candidate,
-                             const PatchPlan &plan, const JsonDoc &expectations);
+                                 const PatchPlan &plan,
+                                 const JsonDoc &expectations);
 class PatchTransaction {
 public:
-  static BinaryImage prepare(const BinaryImage &pristine, const PatchPlan &plan);
+  static BinaryImage prepare(const BinaryImage &pristine,
+                             const PatchPlan &plan);
   static JsonDoc commit(BinaryImage &current, const BinaryImage &pristine,
-                     const PatchPlan &plan, const EmulationOracle &oracle);
+                        const PatchPlan &plan, const EmulationOracle &oracle);
   static void restore(BinaryImage &current, const BinaryImage &pristine,
                       const PatchPlan &plan);
-  static JsonDoc self_check(const BinaryImage &candidate, const PatchPlan &plan);
+  static JsonDoc self_check(const BinaryImage &candidate,
+                            const PatchPlan &plan);
 };
 } // namespace armflow

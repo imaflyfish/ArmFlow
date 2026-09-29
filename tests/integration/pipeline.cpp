@@ -1,5 +1,5 @@
-#include <armflow/subprocess.hpp>
 #include <armflow/pipeline.hpp>
+#include <armflow/subprocess.hpp>
 #include <fstream>
 #include <iostream>
 using namespace armflow;
@@ -40,7 +40,8 @@ int main(int argc, char **argv) {
     const auto request = document_of_bytes(input);
     store_document(argv[2], {{"executed", true}});
     std::cout << JsonDoc({{"source_sha256", request.at("source_sha256")},
-                       {"observations", {{"sites", JsonDoc::object()}}}}).dump();
+                          {"observations", {{"sites", JsonDoc::object()}}}})
+                     .dump();
     return 0;
   }
   if (argc != 3)
@@ -67,14 +68,15 @@ int main(int argc, char **argv) {
                            {"output", scalar(output)}});
       }
     for (unsigned input : {0u, 1u})
-      vectors.push_back({{"entry", format_address(named(image, "bit_selected"))},
-                         {"input", input ? "01" : "00"},
-                         {"output", scalar(input ? 43 : 41)},
-                         {"input_spec", {{"mode", "bytes"}}}});
+      vectors.push_back(
+          {{"entry", format_address(named(image, "bit_selected"))},
+           {"input", input ? "01" : "00"},
+           {"output", scalar(input ? 43 : 41)},
+           {"input_spec", {{"mode", "bytes"}}}});
     JsonDoc config = {{"executable_regions", ranges},
-                   {"mode", "linear"},
-                   {"analysis", {{"emulate", true}}},
-                   {"execution", {{"known_vectors", vectors}}}};
+                      {"mode", "linear"},
+                      {"analysis", {{"emulate", true}}},
+                      {"execution", {{"known_vectors", vectors}}}};
     PipelineDriver workflow(image, config);
     for (const auto &stage : {"survey", "classify", "resolve", "plan"}) {
       auto artifact = workflow.stage(stage);
@@ -95,9 +97,8 @@ int main(int argc, char **argv) {
             "artifact edit tampering rejected");
     auto changed_config = config;
     changed_config["analysis"]["lookback"] = 64;
-    rejects(
-        [&] { PipelineDriver(image, changed_config).check_artifact(plan); },
-        "configuration changes invalidate old stage");
+    rejects([&] { PipelineDriver(image, changed_config).check_artifact(plan); },
+            "configuration changes invalidate old stage");
     auto preview = workflow.execute("preview");
     check(!preview.at("applied").get<bool>() &&
               preview.at("added_edges").empty(),
@@ -142,8 +143,7 @@ int main(int argc, char **argv) {
     check(workflow.execute("verify", false, &graph_candidate).at("passed"),
           "supplied applied candidate with owned graph passes verification");
     auto unplanned = byte_candidate;
-    unplanned.replace(named(image, "flag_changed"),
-                      word_bytes(0xd503201f));
+    unplanned.replace(named(image, "flag_changed"), word_bytes(0xd503201f));
     check(EmulationOracle(config.at("execution"))
                   .compare(image, unplanned)
                   .at("passed") &&
@@ -305,19 +305,28 @@ int main(int argc, char **argv) {
     traced_config["trace_command"] = {
         {"argv", JsonDoc::array({argv[0], "--trace-marker", marker.string()})}};
     store_document(traced_config_path, traced_config);
-    const std::vector<std::pair<std::string, std::vector<std::string>>> invalid_requests{
-        {"unknown command", {"not-a-command"}},
-        {"unsupported current", {"plan", "--current", (temp.path() / "source.json").string()}},
-        {"read-only apply", {"plan", "--apply"}},
-        {"missing restore receipt", {"restore"}},
-        {"restore apply", {"restore", "--apply", "--from", applied.string()}},
-        {"source output", {"plan", "--output", (temp.path() / "source.json").string()}},
-        {"config output", {"plan", "--output", traced_config_path.string()}},
-        {"trace output", {"plan", "--output", inline_trace.string()}},
-        {"artifact output", {"plan", "--from", applied.string(), "--output", applied.string()}},
-        {"current output", {"verify", "--current", applied.string(), "--output", applied.string()}},
-        {"malformed artifact", {"plan", "--from", malformed.string()}},
-        {"malformed current", {"verify", "--current", malformed.string()}}};
+    const std::vector<std::pair<std::string, std::vector<std::string>>>
+        invalid_requests{
+            {"unknown command", {"not-a-command"}},
+            {"unsupported current",
+             {"plan", "--current", (temp.path() / "source.json").string()}},
+            {"read-only apply", {"plan", "--apply"}},
+            {"missing restore receipt", {"restore"}},
+            {"restore apply",
+             {"restore", "--apply", "--from", applied.string()}},
+            {"source output",
+             {"plan", "--output", (temp.path() / "source.json").string()}},
+            {"config output",
+             {"plan", "--output", traced_config_path.string()}},
+            {"trace output", {"plan", "--output", inline_trace.string()}},
+            {"artifact output",
+             {"plan", "--from", applied.string(), "--output",
+              applied.string()}},
+            {"current output",
+             {"verify", "--current", applied.string(), "--output",
+              applied.string()}},
+            {"malformed artifact", {"plan", "--from", malformed.string()}},
+            {"malformed current", {"verify", "--current", malformed.string()}}};
     for (const auto &[name, supplied] : invalid_requests) {
       std::filesystem::remove(marker);
       auto request = supplied;
@@ -327,8 +336,9 @@ int main(int argc, char **argv) {
             "CLI rejects " + name + " before launching a configured trace");
     }
     std::filesystem::remove(marker);
-    check(invoke({"plan", "--config", traced_config_path.string(),
-                  "--output", output.string()}).exit_code == 0 &&
+    check(invoke({"plan", "--config", traced_config_path.string(), "--output",
+                  output.string()})
+                      .exit_code == 0 &&
               std::filesystem::exists(marker),
           "valid CLI request still launches its configured trace");
     const auto before = load_file(output);
@@ -415,9 +425,10 @@ int main(int argc, char **argv) {
     expected_config["regression"]["instruction_samples"] = JsonDoc::array(
         {{{"address", sample_edit.at("address")},
           {"target", sample_edit.at("target")},
-          {"word", format_address(*BinaryImage::from_snapshot(preview.at("image"))
-                                    .instruction(address_of_json(
-                                        sample_edit.at("address"))))}}});
+          {"word",
+           format_address(*BinaryImage::from_snapshot(preview.at("image"))
+                               .instruction(address_of_json(
+                                   sample_edit.at("address"))))}}});
     check(PipelineDriver(image, expected_config)
               .execute("regress")
               .at("passed")
@@ -481,7 +492,7 @@ int main(int argc, char **argv) {
     command_config["trace_command"] = {
         {"argv",
          JsonDoc::array({argv[2], "trace", "--image", "{image}", "--config",
-                      (temp.path() / "job.json").string()})}};
+                         (temp.path() / "job.json").string()})}};
     auto traced_workflow = PipelineDriver(image, command_config);
     check(traced_workflow.stage("resolve").at("observations") ==
               trace.at("observations"),

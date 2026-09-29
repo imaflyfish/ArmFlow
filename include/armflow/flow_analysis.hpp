@@ -11,7 +11,7 @@ struct FlowSettings {
   std::map<Address, Address> index_overrides, target_overrides;
   JsonDoc raw = JsonDoc::object();
   static FlowSettings from_json(const JsonDoc &document,
-                                    const BinaryImage &image);
+                                const BinaryImage &image);
   bool selects(Address address) const;
 };
 struct SwitchSite {
@@ -51,8 +51,8 @@ struct SurveyObservations {
 };
 void gather_direct_edges(BinaryImage &image, const OpcodeDecoder &decoder);
 std::vector<SwitchSite> survey_switches(const BinaryImage &image,
-                                          const OpcodeDecoder &decoder,
-                                          const FlowSettings &settings);
+                                        const OpcodeDecoder &decoder,
+                                        const FlowSettings &settings);
 std::vector<BranchTransition>
 classify_transitions(const BinaryImage &image, const OpcodeDecoder &decoder,
                      const FlowSettings &settings,

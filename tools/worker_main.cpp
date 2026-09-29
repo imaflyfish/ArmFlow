@@ -35,10 +35,10 @@ int main(int argc, char **argv) {
     EmulationOracle oracle(specification);
     auto result = oracle.run(image, entry, input, sites);
     JsonDoc response = {{"protocol_version", 1},
-                     {"image_sha256", image.fingerprint()},
-                     {"entry", format_address(entry)},
-                     {"completed", true},
-                     {"result", json_of_execution(result)}};
+                        {"image_sha256", image.fingerprint()},
+                        {"entry", format_address(entry)},
+                        {"completed", true},
+                        {"result", json_of_execution(result)}};
     std::cout << response.dump() << '\n';
     return 0;
   } catch (const std::exception &error) {

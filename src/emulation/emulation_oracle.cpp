@@ -1,5 +1,5 @@
-#include <armflow/emulation.hpp>
 #include <algorithm>
+#include <armflow/emulation.hpp>
 #include <limits>
 #include <memory>
 #include <unicorn/unicorn.h>
@@ -42,7 +42,8 @@ unsigned register_number(const std::string &name) {
     throw FlowError("invalid register number");
   return static_cast<unsigned>(number);
 }
-Address numeric(const JsonDoc &object, const std::string &key, Address fallback) {
+Address numeric(const JsonDoc &object, const std::string &key,
+                Address fallback) {
   return object.contains(key) ? address_of_json(object[key]) : fallback;
 }
 struct MappedRange {
@@ -73,8 +74,7 @@ class NativeShimContext final : public ShimContext {
 public:
   NativeShimContext(uc_engine *engine, Address heap, Address size,
                     const MappedRanges &mappings)
-      : engine_(engine), next_(heap), end_(heap + size),
-        mappings_(mappings) {}
+      : engine_(engine), next_(heap), end_(heap + size), mappings_(mappings) {}
   std::uint64_t argument(unsigned index) const override {
     if (index > 7)
       throw FlowError("modeled call argument index exceeds X0..X7");
@@ -409,11 +409,12 @@ EmulationOracle::run(const BinaryImage &image, Address entry,
   checked(uc_mem_write(raw, tls + canary_offset, canary_bytes.data(), 8),
           "set canary");
   NativeShimContext calls(raw, heap, heap_size, mappings);
-  OracleRun context{&image, &sites, {}, "", {}, &calls, &imports, {}, &mappings};
+  OracleRun context{&image, &sites,   {}, "",       {},
+                    &calls, &imports, {}, &mappings};
   uc_hook hook = 0;
   checked(uc_hook_add(raw, &hook, UC_HOOK_CODE,
                       reinterpret_cast<void *>(observe), &context, 1, 0),
-            "install observer");
+          "install observer");
   uc_hook memory_hook = 0;
   checked(uc_hook_add(raw, &memory_hook, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE,
                       reinterpret_cast<void *>(observe_memory), &context, 1, 0),
@@ -468,8 +469,8 @@ EmulationOracle::run(const BinaryImage &image, Address entry,
   return context.result;
 }
 JsonDoc EmulationOracle::compare(const BinaryImage &pristine,
-                              const BinaryImage &candidate,
-                              const std::vector<SwitchSite> &sites) const {
+                                 const BinaryImage &candidate,
+                                 const std::vector<SwitchSite> &sites) const {
   auto vectors = specification_.value("known_vectors", JsonDoc::array());
   if (!vectors.is_array() || vectors.empty() || vectors.size() > 10000)
     throw FlowError("verification requires 1..10000 known vectors");
@@ -482,8 +483,8 @@ JsonDoc EmulationOracle::compare(const BinaryImage &pristine,
     auto input = bytes_of_hex(vector.at("input"));
     auto expected = bytes_of_hex(vector.at("output"));
     JsonDoc row = {{"entry", format_address(entry)},
-                {"input", hex_of_bytes(input)},
-                {"expected", hex_of_bytes(expected)}};
+                   {"input", hex_of_bytes(input)},
+                   {"expected", hex_of_bytes(expected)}};
     try {
       auto local_spec = specification_;
       if (vector.contains("input_spec"))

@@ -9,7 +9,7 @@ public:
   JsonDoc stage(const std::string &name);
   void check_artifact(const JsonDoc &artifact);
   JsonDoc execute(const std::string &command, bool apply = false,
-               const BinaryImage *candidate = nullptr);
+                  const BinaryImage *candidate = nullptr);
   JsonDoc restore(const JsonDoc &receipt, const BinaryImage *current = nullptr);
   const BinaryImage &source() const { return input_; }
   const JsonDoc &configuration() const { return configuration_; }
@@ -21,10 +21,10 @@ private:
   JsonDoc execute_batch(bool apply);
   PatchPlan effective_plan(const std::string &command) const;
   BinaryImage with_graph(BinaryImage candidate, const PatchPlan &plan,
-                       JsonDoc &added) const;
+                         JsonDoc &added) const;
   JsonDoc receipt(const std::string &command, const PatchPlan &plan,
-               const BinaryImage &candidate, const JsonDoc &added, bool applied,
-               const JsonDoc &verification) const;
+                  const BinaryImage &candidate, const JsonDoc &added,
+                  bool applied, const JsonDoc &verification) const;
   BinaryImage input_, analysis_image_;
   JsonDoc configuration_, executions_ = JsonDoc::array();
   JsonDoc expansion_ = JsonDoc::object(), table_graph_ = JsonDoc::object();

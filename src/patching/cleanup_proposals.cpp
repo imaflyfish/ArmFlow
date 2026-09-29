@@ -1,11 +1,11 @@
-#include <armflow/patching.hpp>
 #include <algorithm>
+#include <armflow/patching.hpp>
 #include <limits>
 #include <set>
 namespace armflow {
 PatchPlan plan_filler_cleanup(const BinaryImage &image,
-                         const OpcodeDecoder &decoder,
-                         const FlowSettings &settings) {
+                              const OpcodeDecoder &decoder,
+                              const FlowSettings &settings) {
   PatchPlan result;
   result.source_sha256 = image.fingerprint();
   const auto options = settings.raw.value("cleanup", JsonDoc::object());
@@ -34,8 +34,8 @@ PatchPlan plan_filler_cleanup(const BinaryImage &image,
       throw FlowError(
           "cleanup proposal lacks unique selected function ownership");
     result.edits.push_back({address, function->begin, site,
-                            image.read(address, 4), word_bytes(word),
-                            target, reason});
+                            image.read(address, 4), word_bytes(word), target,
+                            reason});
   };
   for (const auto &region : image.regions) {
     if (!region.executable)

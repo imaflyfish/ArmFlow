@@ -21,7 +21,7 @@ ByteBuffer bytes_of_hex(const std::string &value);
 std::string hex_of_bytes(std::span<const std::uint8_t> value);
 std::string sha256_hex(std::span<const std::uint8_t> bytes);
 ByteBuffer load_file(const std::filesystem::path &path,
-                    std::size_t cap = 256 * 1024 * 1024);
+                     std::size_t cap = 256 * 1024 * 1024);
 JsonDoc document_of_bytes(std::span<const std::uint8_t> bytes);
 JsonDoc load_document(const std::filesystem::path &path);
 void store_document(const std::filesystem::path &path, const JsonDoc &value);
@@ -64,7 +64,7 @@ public:
   static BinaryImage from_snapshot(const JsonDoc &document);
   static BinaryImage from_elf(std::span<const std::uint8_t> file);
   static BinaryImage from_flat(std::span<const std::uint8_t> file,
-                             const JsonDoc &mapping);
+                               const JsonDoc &mapping);
   static BinaryImage load(const std::filesystem::path &path);
 };
 } // namespace armflow

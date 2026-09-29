@@ -71,8 +71,9 @@ CliArguments arguments(int argc, char **argv) {
   if (!result.values.contains("--config"))
     throw FlowError("--config is required");
   const std::set<std::string> commands{
-      "survey", "classify", "resolve", "plan", "preview", "run", "graph",
-      "cleanup", "trace", "verify", "regress", "restore", "discover", "batch"};
+      "survey",  "classify", "resolve",  "plan",  "preview",
+      "run",     "graph",    "cleanup",  "trace", "verify",
+      "regress", "restore",  "discover", "batch"};
   if (!commands.contains(result.command))
     throw FlowError("unknown workflow command: " + result.command);
   if (result.values.contains("--current") && result.command != "verify" &&
@@ -95,8 +96,7 @@ void guard_output(const std::filesystem::path &output,
   const auto canonical = std::filesystem::weakly_canonical(output);
   for (const auto &input : inputs) {
     if (canonical == std::filesystem::weakly_canonical(input))
-      throw FlowError(
-          "output must not replace an input or configuration file");
+      throw FlowError("output must not replace an input or configuration file");
     std::error_code error;
     if (std::filesystem::exists(output) &&
         std::filesystem::equivalent(output, input, error) && !error)
@@ -139,26 +139,27 @@ int run(int argc, char **argv) {
     OpcodeDecoder decoder;
     const auto instruction =
         decoder.decode(address, static_cast<std::uint32_t>(raw));
-    std::cout << JsonDoc({{"address", format_address(address)},
-                       {"word", format_address(raw)},
-                       {"valid", instruction.valid},
-                       {"operation", mnemonic_name(instruction.operation)},
-                       {"text", instruction.text},
-                       {"width", instruction.width},
-                       {"destination", instruction.destination},
-                       {"left", instruction.left},
-                       {"right", instruction.right},
-                       {"condition", instruction.condition},
-                       {"flags_written", instruction.flags_written},
-                       {"flags_read", instruction.flags_read},
-                       {"written_registers", instruction.written.to_string()},
-                       {"target", instruction.target
-                                      ? JsonDoc(format_address(*instruction.target))
-                                      : JsonDoc(nullptr)},
-                       {"immediate",
-                        instruction.immediate
-                            ? JsonDoc(format_address(*instruction.immediate))
-                            : JsonDoc(nullptr)}})
+    std::cout << JsonDoc(
+                     {{"address", format_address(address)},
+                      {"word", format_address(raw)},
+                      {"valid", instruction.valid},
+                      {"operation", mnemonic_name(instruction.operation)},
+                      {"text", instruction.text},
+                      {"width", instruction.width},
+                      {"destination", instruction.destination},
+                      {"left", instruction.left},
+                      {"right", instruction.right},
+                      {"condition", instruction.condition},
+                      {"flags_written", instruction.flags_written},
+                      {"flags_read", instruction.flags_read},
+                      {"written_registers", instruction.written.to_string()},
+                      {"target", instruction.target ? JsonDoc(format_address(
+                                                          *instruction.target))
+                                                    : JsonDoc(nullptr)},
+                      {"immediate",
+                       instruction.immediate
+                           ? JsonDoc(format_address(*instruction.immediate))
+                           : JsonDoc(nullptr)}})
                      .dump(2)
               << '\n';
     return instruction.valid ? 0 : 1;

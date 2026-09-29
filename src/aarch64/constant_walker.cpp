@@ -1,5 +1,5 @@
-#include <armflow/opcode.hpp>
 #include <algorithm>
+#include <armflow/opcode.hpp>
 #include <limits>
 namespace armflow {
 namespace {
@@ -16,14 +16,14 @@ void merge_producers(ConstantFact &value, const ConstantFact &other) {
 }
 } // namespace
 ConstantWalker::ConstantWalker(const BinaryImage &image,
-                                 const OpcodeDecoder &decoder,
-                                 unsigned window, unsigned depth)
+                               const OpcodeDecoder &decoder, unsigned window,
+                               unsigned depth)
     : image_(image), decoder_(decoder), window_(window), depth_(depth) {
   if (window == 0 || window > 4096 || depth == 0 || depth > 64)
     throw FlowError("invalid constant-analysis budget");
 }
 std::optional<Address> ConstantWalker::producer(Address use,
-                                                 unsigned reg) const {
+                                                unsigned reg) const {
   if (reg > 30 || use % 4)
     return {};
   const auto *region = image_.region_at(use);
@@ -66,16 +66,16 @@ std::optional<Address> ConstantWalker::producer(Address use,
   return {};
 }
 std::optional<ConstantFact> ConstantWalker::resolve(Address use, unsigned reg,
-                                                      unsigned width) const {
+                                                    unsigned width) const {
   if (reg > 31 || (width != 32 && width != 64))
     return {};
   unsigned budget = 4096;
   return derive(use, reg, width, depth_, budget);
 }
 std::optional<ConstantFact> ConstantWalker::derive(Address use, unsigned reg,
-                                                     unsigned width,
-                                                     unsigned depth,
-                                                     unsigned &budget) const {
+                                                   unsigned width,
+                                                   unsigned depth,
+                                                   unsigned &budget) const {
   if (budget == 0 || depth == 0)
     return {};
   --budget;

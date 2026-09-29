@@ -73,7 +73,8 @@ int main() {
       },
       "address wrap rejected");
   rejects([&] { address_of_json(JsonDoc(-1)); }, "negative address rejected");
-  rejects([&] { address_of_json(JsonDoc("0x")); }, "empty hex address rejected");
+  rejects([&] { address_of_json(JsonDoc("0x")); },
+          "empty hex address rejected");
   rejects([&] { bytes_of_hex("zz"); }, "invalid hex rejected");
   ConstantWalker tracker(image, decoder);
   auto value = tracker.resolve(0x100010, 2);
@@ -132,8 +133,8 @@ int main() {
   auto resolved = [&](std::initializer_list<std::uint32_t> words, unsigned reg,
                       std::uint64_t expected, const std::string &name) {
     auto fixture = code(words);
-    auto found = ConstantWalker(fixture, decoder)
-                     .resolve(fixture.regions[0].end(), reg);
+    auto found =
+        ConstantWalker(fixture, decoder).resolve(fixture.regions[0].end(), reg);
     check(found && found->singleton() && found->values[0] == expected, name);
   };
   resolved({0x52b7dde8}, 8, 0xbeef0000, "shifted MOVZ");
@@ -174,8 +175,7 @@ int main() {
         "UXTW table index");
   check(decoder.decode(0x1000, 0xd0000000).target == 0x3000,
         "ADRP signed page materialization");
-  check(decoder.decode(0x1000, 0x2a0203e8).operation ==
-            Mnemonic::move_register,
+  check(decoder.decode(0x1000, 0x2a0203e8).operation == Mnemonic::move_register,
         "MOV alias decoded explicitly");
   std::cout << passed << " checks passed; " << failed << " failed\n";
   return failed ? 1 : 0;

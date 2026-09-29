@@ -1,5 +1,5 @@
-#include <armflow/call_shims.hpp>
 #include <algorithm>
+#include <armflow/call_shims.hpp>
 #include <charconv>
 #include <limits>
 namespace armflow {
@@ -49,7 +49,7 @@ void fill(ShimContext &context, bool checked) {
   if (checked && count > context.argument(3))
     throw FlowError("checked memory fill exceeds destination size");
   context.write(destination, ByteBuffer(count, static_cast<std::uint8_t>(
-                                                  context.argument(1))));
+                                                   context.argument(1))));
   context.return_value(destination);
 }
 void compare(ShimContext &context, bool length_limited) {
@@ -251,7 +251,7 @@ void format(ShimContext &context, bool length_limited) {
       maximum == 0 ? 0 : std::min<std::uint64_t>(output.size(), maximum - 1);
   if (maximum != 0) {
     ByteBuffer bytes(output.begin(),
-                    output.begin() + static_cast<std::ptrdiff_t>(count));
+                     output.begin() + static_cast<std::ptrdiff_t>(count));
     bytes.push_back(0);
     context.write(destination, bytes);
   }

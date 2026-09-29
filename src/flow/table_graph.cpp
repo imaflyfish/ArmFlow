@@ -1,11 +1,11 @@
-#include <armflow/patching.hpp>
 #include <algorithm>
+#include <armflow/patching.hpp>
 #include <limits>
 namespace armflow {
 JsonDoc extend_table_graph(const BinaryImage &image,
-                        const FlowSettings &settings,
-                        const std::vector<SwitchSite> &sites,
-                        PatchPlan &plan) {
+                           const FlowSettings &settings,
+                           const std::vector<SwitchSite> &sites,
+                           PatchPlan &plan) {
   const auto options = settings.raw.value("analysis", JsonDoc::object())
                            .value("graph_tables", JsonDoc::object());
   if (!options.is_object())
@@ -23,18 +23,18 @@ JsonDoc extend_table_graph(const BinaryImage &image,
   for (const auto &edge : plan.graph)
     edges[edge.source].insert(edge.target);
   JsonDoc report = {{"enabled", true},
-                 {"maximum_entries", maximum},
-                 {"sites", JsonDoc::array()},
-                 {"truncated", false},
-                 {"semantics", "table candidates for unchanged dispatchers; "
-                               "not execution or byte-rewrite evidence"}};
+                    {"maximum_entries", maximum},
+                    {"sites", JsonDoc::array()},
+                    {"truncated", false},
+                    {"semantics", "table candidates for unchanged dispatchers; "
+                                  "not execution or byte-rewrite evidence"}};
   for (const auto &site : sites) {
     if (site.model == "comparison_tree" || changed.contains(site.branch))
       continue;
     JsonDoc row = {{"site", format_address(site.branch)},
-                {"entries", JsonDoc::array()},
-                {"truncated", false},
-                {"stop", "unresolved table"}};
+                   {"entries", JsonDoc::array()},
+                   {"truncated", false},
+                   {"stop", "unresolved table"}};
     if (!image.relocated)
       row["stop"] = "image is not declared relocated";
     else if (site.target_table && site.target_access) {

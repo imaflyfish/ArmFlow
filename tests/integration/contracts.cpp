@@ -1,6 +1,6 @@
-#include <armflow/subprocess.hpp>
-#include <armflow/patching.hpp>
 #include <algorithm>
+#include <armflow/patching.hpp>
+#include <armflow/subprocess.hpp>
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
@@ -125,14 +125,16 @@ int main(int argc, char **argv) {
     auto flows = resolve_targets(image, settings, sites, transitions, none);
     auto plan = plan_patches(image, decoder, settings, sites, flows, none);
     for (const auto &site : sites)
-      check(json_of_site(site_of_json(json_of_site(site))) == json_of_site(site),
+      check(json_of_site(site_of_json(json_of_site(site))) ==
+                json_of_site(site),
             "site artifact roundtrip");
     for (const auto &value : transitions)
       check(json_of_transition(transition_of_json(json_of_transition(value))) ==
                 json_of_transition(value),
             "transition artifact roundtrip");
     for (const auto &value : flows)
-      check(json_of_branch(branch_of_json(json_of_branch(value))) == json_of_branch(value),
+      check(json_of_branch(branch_of_json(json_of_branch(value))) ==
+                json_of_branch(value),
             "resolution artifact roundtrip");
     check(plan_of_json(plan.json()).json() == plan.json(),
           "plan artifact roundtrip");

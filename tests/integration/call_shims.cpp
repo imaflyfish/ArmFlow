@@ -1,6 +1,6 @@
+#include <algorithm>
 #include <armflow/emulation.hpp>
 #include <armflow/subprocess.hpp>
-#include <algorithm>
 #include <cstdio>
 #include <iostream>
 #include <limits>
@@ -231,10 +231,11 @@ int main(int argc, char **argv) {
     imports["__memcpy_chk"] =
         format_address(named(image, "imported_memcpy_checked"));
     imports["__vsprintf_chk"] = format_address(named(image, "imported_printf"));
-    imports["__vsnprintf_chk"] = format_address(named(image, "imported_snprintf"));
+    imports["__vsnprintf_chk"] =
+        format_address(named(image, "imported_snprintf"));
     JsonDoc spec = {{"imports", imports},
-                 {"input", {{"mode", "string"}}},
-                 {"output", {{"mode", "return"}}}};
+                    {"input", {{"mode", "string"}}},
+                    {"output", {{"mode", "return"}}}};
     EmulationOracle oracle(spec);
     check(oracle.run(image, named(image, "copy_roundtrip"), bytes("ABCDEFGH"))
                   .output == bytes("ABCDEFGH"),
@@ -366,23 +367,29 @@ int main(int argc, char **argv) {
       mapped.entry = 0x100000;
       mapped.regions = {
           {0x100000, code, ".text", true, false, true, {}},
-          {0x100100, word_bytes(0xd65f03c0), ".noexec", true, false,
-           false, {}},
+          {0x100100, word_bytes(0xd65f03c0), ".noexec", true, false, false, {}},
           {0x101100, ByteBuffer(16, 'R'), ".rodata", true, false, false, {}},
           {0x101200, ByteBuffer(16, 'A'), ".data", true, true, false, {}},
           {0x101210, ByteBuffer(16, 'B'), ".adjacent", true, true, false, {}},
-          {0x101300, ByteBuffer(16, 'W'), ".writeonly", false, true, false, {}}};
+          {0x101300,
+           ByteBuffer(16, 'W'),
+           ".writeonly",
+           false,
+           true,
+           false,
+           {}}};
       mapped.functions = {{mapped.entry, mapped.entry + code.size(), "owned"}};
       mapped.validate();
       return mapped;
     };
     const auto modeled_image =
         mapped_image({0xaa1e03f3, 0xd63f0060, 0xaa1303fe, 0xd65f03c0});
-    JsonDoc write_spec = {{"imports", {{"memset", "0x200000"}}},
-                       {"registers", {{"X0", "0x101200"}, {"X1", 65},
-                                      {"X2", 1}, {"X3", "0x200000"}}},
-                       {"output", {{"mode", "region"},
-                                   {"address", "0x101200"}, {"length", 1}}}};
+    JsonDoc write_spec = {
+        {"imports", {{"memset", "0x200000"}}},
+        {"registers",
+         {{"X0", "0x101200"}, {"X1", 65}, {"X2", 1}, {"X3", "0x200000"}}},
+        {"output",
+         {{"mode", "region"}, {"address", "0x101200"}, {"length", 1}}}};
     for (auto target : {0x101100, 0x101180, 0x101220}) {
       auto denied = write_spec;
       denied["registers"]["X0"] = target;
@@ -402,9 +409,10 @@ int main(int argc, char **argv) {
     read_spec["imports"] = {{"memcpy", "0x200000"}};
     for (auto source : {0x101180, 0x101300}) {
       read_spec["registers"]["X1"] = source;
-      rejects([&] { EmulationOracle(read_spec).run(modeled_image, 0x100000, {}); },
-              "modeled read rejects unmapped or unreadable sub-page region " +
-                  format_address(source));
+      rejects(
+          [&] { EmulationOracle(read_spec).run(modeled_image, 0x100000, {}); },
+          "modeled read rejects unmapped or unreadable sub-page region " +
+              format_address(source));
     }
     read_spec["registers"]["X1"] = "0x101100";
     check(EmulationOracle(read_spec).run(modeled_image, 0x100000, {}).output ==
@@ -415,9 +423,10 @@ int main(int argc, char **argv) {
     store_spec.erase("imports");
     for (auto target : {0x101100, 0x101180}) {
       store_spec["registers"]["X0"] = target;
-      rejects([&] { EmulationOracle(store_spec).run(store_image, 0x100000, {}); },
-              "guest store rejects read-only or unmapped sub-page region " +
-                  format_address(target));
+      rejects(
+          [&] { EmulationOracle(store_spec).run(store_image, 0x100000, {}); },
+          "guest store rejects read-only or unmapped sub-page region " +
+              format_address(target));
     }
     store_spec["registers"]["X0"] = "0x101200";
     check(EmulationOracle(store_spec).run(store_image, 0x100000, {}).output ==
@@ -437,24 +446,28 @@ int main(int argc, char **argv) {
           "guest load retains valid read-only sub-page access");
     const auto crossing_image = mapped_image({0xf9400000, 0xd65f03c0});
     load_spec["registers"]["X0"] = "0x10121f";
-    rejects([&] { EmulationOracle(load_spec).run(crossing_image, 0x100000, {}); },
-            "guest load cannot cross a region end into page padding");
+    rejects(
+        [&] { EmulationOracle(load_spec).run(crossing_image, 0x100000, {}); },
+        "guest load cannot cross a region end into page padding");
     load_spec["registers"]["X0"] = "0x10120c";
-    check(EmulationOracle(load_spec).run(crossing_image, 0x100000, {}).returned ==
-              0x4242424241414141ULL,
-          "guest access may span contiguous readable regions");
+    check(
+        EmulationOracle(load_spec).run(crossing_image, 0x100000, {}).returned ==
+            0x4242424241414141ULL,
+        "guest access may span contiguous readable regions");
     const auto return_image = mapped_image({0xd65f03c0});
     JsonDoc output_spec = {{"output", {{"mode", "region"}, {"length", 1}}}};
     for (auto source : {0x101180, 0x101300}) {
       output_spec["output"]["address"] = source;
-      rejects([&] { EmulationOracle(output_spec).run(return_image, 0x100000, {}); },
-              "output extraction rejects unmapped or unreadable sub-page region " +
-                  format_address(source));
+      rejects(
+          [&] { EmulationOracle(output_spec).run(return_image, 0x100000, {}); },
+          "output extraction rejects unmapped or unreadable sub-page region " +
+              format_address(source));
     }
     output_spec["output"]["address"] = "0x10121f";
     output_spec["output"]["length"] = 2;
-    rejects([&] { EmulationOracle(output_spec).run(return_image, 0x100000, {}); },
-            "output extraction cannot cross a region end into page padding");
+    rejects(
+        [&] { EmulationOracle(output_spec).run(return_image, 0x100000, {}); },
+        "output extraction cannot cross a region end into page padding");
     output_spec["output"]["address"] = "0x10120f";
     check(EmulationOracle(output_spec).run(return_image, 0x100000, {}).output ==
               bytes("AB"),
@@ -470,8 +483,11 @@ int main(int argc, char **argv) {
     external_denied["backend"] = "command";
     external_denied["command"] = JsonDoc::array({argv[2]});
     external_denied["registers"]["X0"] = "0x101100";
-    rejects([&] { EmulationOracle(external_denied).run(modeled_image, 0x100000, {}); },
-            "separate oracle worker enforces sub-page model permissions");
+    rejects(
+        [&] {
+          EmulationOracle(external_denied).run(modeled_image, 0x100000, {});
+        },
+        "separate oracle worker enforces sub-page model permissions");
     std::cout << passed << " call-model checks passed; " << failed
               << " failed\n";
     return failed ? 1 : 0;

@@ -28,9 +28,10 @@ BinaryImage PatchTransaction::prepare(const BinaryImage &pristine,
     throw FlowError("candidate instruction self-check failed");
   return candidate;
 }
-JsonDoc PatchTransaction::commit(BinaryImage &current, const BinaryImage &pristine,
-                                const PatchPlan &plan,
-                                const EmulationOracle &oracle) {
+JsonDoc PatchTransaction::commit(BinaryImage &current,
+                                 const BinaryImage &pristine,
+                                 const PatchPlan &plan,
+                                 const EmulationOracle &oracle) {
   auto candidate = prepare(pristine, plan);
   auto current_hash = current.fingerprint();
   if (current_hash != candidate.fingerprint() &&
@@ -38,8 +39,7 @@ JsonDoc PatchTransaction::commit(BinaryImage &current, const BinaryImage &pristi
     throw FlowError("current image changed; no edits were committed");
   auto evidence = oracle.compare(pristine, candidate);
   if (!evidence.at("passed").get<bool>())
-    throw FlowError(
-        "candidate failed before/after known-vector comparison");
+    throw FlowError("candidate failed before/after known-vector comparison");
   std::set<Address> covered;
   for (const auto &vector : evidence.at("vectors"))
     for (const auto &address : vector.at("original_coverage"))
@@ -91,8 +91,9 @@ JsonDoc PatchTransaction::commit(BinaryImage &current, const BinaryImage &pristi
   current = std::move(candidate);
   return evidence;
 }
-void PatchTransaction::restore(BinaryImage &current, const BinaryImage &pristine,
-                                 const PatchPlan &plan) {
+void PatchTransaction::restore(BinaryImage &current,
+                               const BinaryImage &pristine,
+                               const PatchPlan &plan) {
   auto candidate = prepare(pristine, plan);
   auto fingerprint = current.fingerprint();
   if (fingerprint == pristine.fingerprint())
@@ -103,7 +104,7 @@ void PatchTransaction::restore(BinaryImage &current, const BinaryImage &pristine
   current = pristine;
 }
 JsonDoc PatchTransaction::self_check(const BinaryImage &candidate,
-                                    const PatchPlan &plan) {
+                                     const PatchPlan &plan) {
   OpcodeDecoder decoder;
   JsonDoc rows = JsonDoc::array();
   bool passed = true;
@@ -127,7 +128,8 @@ JsonDoc PatchTransaction::self_check(const BinaryImage &candidate,
           okay && edit.target.has_value() && instruction->target == edit.target;
     if (edit.target)
       okay = okay && candidate.valid_target(*edit.target);
-    rows.push_back({{"address", format_address(edit.address)}, {"passed", okay}});
+    rows.push_back(
+        {{"address", format_address(edit.address)}, {"passed", okay}});
     passed = passed && okay;
   }
   return {{"passed", passed}, {"instructions", rows}};

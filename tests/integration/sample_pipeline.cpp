@@ -172,8 +172,8 @@ int main(int argc, char **argv) {
         classify_transitions(current, decoder, settings, repeated_sites);
     auto repeated_flows = resolve_targets(current, settings, repeated_sites,
                                           repeated_transitions, combined);
-    auto repeated_plan = plan_patches(
-        current, decoder, settings, repeated_sites, repeated_flows, combined);
+    auto repeated_plan = plan_patches(current, decoder, settings,
+                                      repeated_sites, repeated_flows, combined);
     check(repeated_plan.json() == plan.json(),
           "restored image reproduces the complete plan and skip set");
     auto drifted = image;
@@ -202,9 +202,10 @@ int main(int argc, char **argv) {
     });
     EmulationOracle one_path(
         {{"known_vectors",
-          JsonDoc::array({{{"entry", format_address(entry(image, "two_choice"))},
-                        {"input", hex_of_bytes(scalar(0))},
-                        {"output", hex_of_bytes(scalar(7))}}})}});
+          JsonDoc::array(
+              {{{"entry", format_address(entry(image, "two_choice"))},
+                {"input", hex_of_bytes(scalar(0))},
+                {"output", hex_of_bytes(scalar(7))}}})}});
     bool path_refused = false;
     try {
       PatchTransaction::commit(unverified, image, binary_plan, one_path);
@@ -224,8 +225,9 @@ int main(int argc, char **argv) {
     check(refused, "duplicate edit rejected before write");
     JsonDoc specification = {
         {"entry", format_address(entry(image, "two_constant"))},
-        {"known_vectors", JsonDoc::array({{{"input", hex_of_bytes(scalar(3))},
-                                        {"output", hex_of_bytes(scalar(10))}}})}};
+        {"known_vectors",
+         JsonDoc::array({{{"input", hex_of_bytes(scalar(3))},
+                          {"output", hex_of_bytes(scalar(10))}}})}};
     EmulationOracle verifier(specification);
     check(verifier.compare(image, image, sites)["passed"],
           "known-vector baseline pass");
@@ -235,8 +237,7 @@ int main(int argc, char **argv) {
     check(!verifier.compare(image, corrupted, sites)["passed"],
           "changed candidate is really executed and rejected");
     auto endless = image;
-    endless.replace(entry(image, "two_constant"),
-                    word_bytes(0x14000000));
+    endless.replace(entry(image, "two_constant"), word_bytes(0x14000000));
     bool rejected = false;
     try {
       oracle.run(endless, entry(image, "two_constant"), scalar(0));

@@ -1,5 +1,5 @@
-#include <armflow/patching.hpp>
 #include <algorithm>
+#include <armflow/patching.hpp>
 #include <deque>
 #include <set>
 namespace armflow {
@@ -79,19 +79,13 @@ bool has_external_entry(const BinaryImage &image, Address start, Address end) {
       return true;
   return false;
 }
-WordEdit edit(const BinaryImage &image, const SwitchSite &site,
-                     Address address, std::uint32_t word,
-                     std::optional<Address> target, const std::string &reason) {
-  return {address,
-          site.parent,
-          site.branch,
-          image.read(address, 4),
-          word_bytes(word),
-          target,
-          reason};
+WordEdit edit(const BinaryImage &image, const SwitchSite &site, Address address,
+              std::uint32_t word, std::optional<Address> target,
+              const std::string &reason) {
+  return {address,          site.parent, site.branch, image.read(address, 4),
+          word_bytes(word), target,      reason};
 }
-bool private_stack_slot(const BinaryImage &image,
-                        const OpcodeDecoder &decoder,
+bool private_stack_slot(const BinaryImage &image, const OpcodeDecoder &decoder,
                         const SwitchSite &site) {
   if (!site.state_slot || site.state_slot->base != 31 ||
       site.state_slot->index != -1 || site.state_slot->width != 4 ||
@@ -221,12 +215,11 @@ bool table_is_readonly(const BinaryImage &image,
   return region && region->readable && !region->writable;
 }
 } // namespace
-PatchPlan plan_patches(const BinaryImage &image,
-                          const OpcodeDecoder &decoder,
-                          const FlowSettings &settings,
-                          const std::vector<SwitchSite> &sites,
-                          const std::vector<ResolvedBranch> &flows,
-                          const SurveyObservations &observed) {
+PatchPlan plan_patches(const BinaryImage &image, const OpcodeDecoder &decoder,
+                       const FlowSettings &settings,
+                       const std::vector<SwitchSite> &sites,
+                       const std::vector<ResolvedBranch> &flows,
+                       const SurveyObservations &observed) {
   PatchPlan plan;
   plan.source_sha256 = image.fingerprint();
   std::set<std::pair<Address, Address>> graph;
@@ -552,8 +545,8 @@ JsonDoc PatchPlan::json() const {
          {"site", format_address(change.site)},
          {"expected", hex_of_bytes(change.expected)},
          {"replacement", hex_of_bytes(change.replacement)},
-         {"target",
-          change.target ? JsonDoc(format_address(*change.target)) : JsonDoc(nullptr)},
+         {"target", change.target ? JsonDoc(format_address(*change.target))
+                                  : JsonDoc(nullptr)},
          {"reason", change.reason}});
   for (const auto &edge : graph)
     edges.push_back({{"source", format_address(edge.source)},

@@ -1,6 +1,6 @@
+#include <algorithm>
 #include <armflow/emulation.hpp>
 #include <armflow/subprocess.hpp>
-#include <algorithm>
 #include <cctype>
 namespace armflow {
 namespace {
@@ -15,7 +15,7 @@ void substitute(std::string &argument, const std::string &key,
 } // namespace
 JsonDoc json_of_execution(const EmulationResult &result) {
   JsonDoc coverage = JsonDoc::array(), states = JsonDoc::object(),
-       edges = JsonDoc::object();
+          edges = JsonDoc::object();
   for (auto address : result.executed)
     coverage.push_back(format_address(address));
   for (const auto &[source, destinations] : result.control_edges) {
@@ -40,7 +40,7 @@ JsonDoc json_of_execution(const EmulationResult &result) {
           {"state_targets", states}};
 }
 EmulationResult execution_of_json(const JsonDoc &record,
-                                    const BinaryImage &image) {
+                                  const BinaryImage &image) {
   EmulationResult result;
   result.output = bytes_of_hex(record.at("output"));
   if (result.output.size() > 1024 * 1024)
@@ -52,8 +52,7 @@ EmulationResult execution_of_json(const JsonDoc &record,
   result.observations.merge(record.at("observations"));
   const auto &coverage = record.at("coverage");
   if (!coverage.is_array() || coverage.empty() || coverage.size() > 1000000)
-    throw FlowError(
-        "oracle response requires bounded instruction coverage");
+    throw FlowError("oracle response requires bounded instruction coverage");
   for (const auto &address : coverage) {
     auto point = address_of_json(address);
     if (!image.instruction(point))
@@ -130,16 +129,15 @@ EmulationResult command_execution(const JsonDoc &specification,
     parameters.erase("protocol");
     parameters["backend"] = "unicorn";
     JsonDoc request = {
-        {"protocol_version", 1},       {"image_path", image_path.string()},
-        {"image_sha256", fingerprint}, {"entry", format_address(entry)},
-        {"input", hex_of_bytes(input)},   {"execution", parameters},
+        {"protocol_version", 1},        {"image_path", image_path.string()},
+        {"image_sha256", fingerprint},  {"entry", format_address(entry)},
+        {"input", hex_of_bytes(input)}, {"execution", parameters},
         {"sites", descriptors}};
     auto text = request.dump();
     payload.assign(text.begin(), text.end());
   } else if (protocol == "bytes" || protocol == "hex") {
     if (!image_argument)
-      throw FlowError(
-          "raw oracle command must receive an {image} argument");
+      throw FlowError("raw oracle command must receive an {image} argument");
     if (protocol == "hex") {
       auto text = hex_of_bytes(input) + "\n";
       payload.assign(text.begin(), text.end());
@@ -154,10 +152,9 @@ EmulationResult command_execution(const JsonDoc &specification,
   auto process =
       spawn_process(arguments, payload, static_cast<unsigned>(timeout));
   if (process.exit_code != 0)
-    throw FlowError(
-        "oracle command failed with status " +
-        std::to_string(process.exit_code) + ": " +
-        std::string(process.errors.begin(), process.errors.end()));
+    throw FlowError("oracle command failed with status " +
+                    std::to_string(process.exit_code) + ": " +
+                    std::string(process.errors.begin(), process.errors.end()));
   if (protocol != "json") {
     EmulationResult result;
     if (protocol == "hex") {
@@ -179,7 +176,7 @@ EmulationResult command_execution(const JsonDoc &specification,
       response.at("image_sha256") != fingerprint ||
       address_of_json(response.at("entry")) != entry)
     throw FlowError("oracle response does not identify the requested "
-                        "candidate image and entry");
+                    "candidate image and entry");
   if (!response.value("completed", false))
     throw FlowError("oracle response did not complete execution");
   return execution_of_json(response.at("result"), image);

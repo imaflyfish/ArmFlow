@@ -1,5 +1,5 @@
-#include <armflow/pipeline.hpp>
 #include <algorithm>
+#include <armflow/pipeline.hpp>
 #include <set>
 namespace armflow {
 namespace {
@@ -63,8 +63,7 @@ PipelineDriver::PipelineDriver(BinaryImage input, JsonDoc configuration)
         auto address = address_of_json(selector);
         function = input_.function_at(address);
         if (!function || function->begin != address)
-          throw FlowError(
-              "function selector must identify a function entry");
+          throw FlowError("function selector must identify a function entry");
       }
       bool selected = false;
       for (const auto &[begin, end] : settings_.ranges) {
@@ -76,8 +75,7 @@ PipelineDriver::PipelineDriver(BinaryImage input, JsonDoc configuration)
         }
       }
       if (!selected)
-        throw FlowError(
-            "function lies outside selected executable regions");
+        throw FlowError("function lies outside selected executable regions");
     }
     settings_.ranges = std::move(ranges);
   }
@@ -122,13 +120,13 @@ JsonDoc PipelineDriver::exercise() {
       local["output"] = vector["output_spec"];
     auto entry =
         address_of_json(vector.contains("entry") ? vector.at("entry")
-                                               : specification.at("entry"));
+                                                 : specification.at("entry"));
     auto input = bytes_of_hex(vector.at("input"));
     auto expected = bytes_of_hex(vector.at("output"));
     auto result = EmulationOracle(local).run(input_, entry, input, sites_);
     if (result.output != expected)
       throw FlowError("known vector does not match the original image at " +
-                          format_address(entry));
+                      format_address(entry));
     accumulated.merge(result.observations.json());
     validate_observations(input_, accumulated, settings_.maximum_targets);
     for (const auto &[site, values] : result.state_targets)
@@ -191,14 +189,13 @@ void PipelineDriver::analyze(unsigned depth) {
         }
       }
     }
-    expansion_ =
-        expand_states(analysis_image_, decoder_, settings_, sites_, flows_,
-                           observations_, state_targets_);
+    expansion_ = expand_states(analysis_image_, decoder_, settings_, sites_,
+                               flows_, observations_, state_targets_);
     depth_ = 3;
   }
   if (depth_ < 4 && depth >= 4) {
     plan_ = plan_patches(analysis_image_, decoder_, settings_, sites_, flows_,
-                          observations_);
+                         observations_);
     plan_.source_sha256 = input_.fingerprint();
     std::set<std::pair<Address, Address>> graph;
     for (const auto &edge : plan_.graph)
@@ -259,13 +256,11 @@ void PipelineDriver::check_artifact(const JsonDoc &artifact) {
       artifact.at("source_sha256").get<std::string>() != input_.fingerprint() ||
       artifact.at("configuration_sha256").get<std::string>() !=
           configuration_hash_)
-    throw FlowError(
-        "artifact version, source or configuration does not match");
+    throw FlowError("artifact version, source or configuration does not match");
   const auto name = artifact.at("stage").get<std::string>();
   auto expected = stage(name);
   if (nlohmann::json(expected) != nlohmann::json(artifact))
-    throw FlowError(
-        "stage artifact differs from freshly regenerated analysis");
+    throw FlowError("stage artifact differs from freshly regenerated analysis");
 }
 PatchPlan PipelineDriver::effective_plan(const std::string &command) const {
   if (command == "cleanup") {
@@ -294,9 +289,10 @@ BinaryImage PipelineDriver::with_graph(BinaryImage candidate,
   return candidate;
 }
 JsonDoc PipelineDriver::receipt(const std::string &command,
-                               const PatchPlan &plan,
-                               const BinaryImage &candidate, const JsonDoc &added,
-                               bool applied, const JsonDoc &verification) const {
+                                const PatchPlan &plan,
+                                const BinaryImage &candidate,
+                                const JsonDoc &added, bool applied,
+                                const JsonDoc &verification) const {
   auto result = envelope(command);
   result["mode"] = mode_;
   result["applied"] = applied;
@@ -311,7 +307,7 @@ JsonDoc PipelineDriver::receipt(const std::string &command,
   return result;
 }
 JsonDoc PipelineDriver::execute(const std::string &command, bool apply,
-                               const BinaryImage *candidate) {
+                                const BinaryImage *candidate) {
   if (command == "batch")
     return execute_batch(apply);
   if (command == "survey" || command == "classify" || command == "resolve" ||
@@ -414,7 +410,8 @@ JsonDoc PipelineDriver::execute(const std::string &command, bool apply,
       result["verification"] = verification;
       result["self_check"] = PatchTransaction::self_check(*candidate, plan);
       result["expectations"] = verify_plan_expectations(
-          *candidate, plan, configuration_.value("regression", JsonDoc::object()));
+          *candidate, plan,
+          configuration_.value("regression", JsonDoc::object()));
       result["passed"] = result.at("expectations").at("passed").get<bool>() &&
                          verification.at("passed").get<bool>() &&
                          result["self_check"].at("passed").get<bool>();
@@ -456,9 +453,9 @@ JsonDoc PipelineDriver::execute(const std::string &command, bool apply,
                        expectations.at("passed").get<bool>();
   return result;
 }
-JsonDoc PipelineDriver::restore(const JsonDoc &record, const BinaryImage *current) {
-  if (record.at("schema_version") != 1 ||
-      record.at("producer") != "ArmFlow" ||
+JsonDoc PipelineDriver::restore(const JsonDoc &record,
+                                const BinaryImage *current) {
+  if (record.at("schema_version") != 1 || record.at("producer") != "ArmFlow" ||
       !record.at("applied").get<bool>() ||
       record.at("source_sha256").get<std::string>() != input_.fingerprint() ||
       record.at("configuration_sha256").get<std::string>() !=

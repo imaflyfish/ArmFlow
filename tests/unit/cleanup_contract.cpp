@@ -68,7 +68,8 @@ int main() {
           "cleanup requires function ownership");
     auto bad_target = image;
     bad_target.replace(0x1010, word_bytes(0xa2f2fff1));
-    const auto rejected_literal = plan_filler_cleanup(bad_target, decoder, settings);
+    const auto rejected_literal =
+        plan_filler_cleanup(bad_target, decoder, settings);
     check(rejected_literal.graph.empty() && !rejected_literal.skipped.empty(),
           "undecodable literal target cannot produce a branch fold");
     auto filler = fixture({0xd503201f, 0xa2f2fff1, 0xa2f2fff1, 0xd65f03c0});
@@ -95,14 +96,14 @@ int main() {
     rejects(
         [&] {
           plan_filler_cleanup(filler, decoder,
-                       FlowSettings::from_json(malformed, filler));
+                              FlowSettings::from_json(malformed, filler));
         },
         "invalid cleanup window rejected");
     auto vectors = config;
     vectors["execution"] = {
         {"known_vectors", JsonDoc::array({{{"entry", "0x1010"},
-                                        {"input", "00"},
-                                        {"output", "0700000000000000"}}})}};
+                                           {"input", "00"},
+                                           {"output", "0700000000000000"}}})}};
     PipelineDriver workflow(image, vectors);
     auto preview = workflow.execute("cleanup");
     check(!preview.at("applied").get<bool>() &&

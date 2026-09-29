@@ -31,9 +31,10 @@ int main(int argc, char **argv) {
     return 2;
   try {
     const auto image = BinaryImage::load(argv[1]);
-    JsonDoc config = {{"executable_regions", JsonDoc::array({{{"label", "load_0"}}})},
-                   {"mode", "linear"},
-                   {"functions", JsonDoc::array({"state_chain"})}};
+    JsonDoc config = {
+        {"executable_regions", JsonDoc::array({{{"label", "load_0"}}})},
+        {"mode", "linear"},
+        {"functions", JsonDoc::array({"state_chain"})}};
     auto analysis = PipelineDriver(image, config).stage("plan");
     check(analysis.at("sites").size() == 1, "two-level state chain identified");
     unsigned transforms = 0;
@@ -91,7 +92,8 @@ int main(int argc, char **argv) {
     config["analysis"]["state_expansion"] = {{"maximum_states", 1.5}};
     rejects([&] { PipelineDriver(image, config).stage("resolve"); },
             "fractional state cap rejected");
-    const auto state_site = address_of_json(analysis.at("sites")[0].at("branch"));
+    const auto state_site =
+        address_of_json(analysis.at("sites")[0].at("branch"));
     config["analysis"]["state_expansion"] = {
         {"seed_states", {{"0x1234", JsonDoc::array({1})}}}};
     rejects([&] { PipelineDriver(image, config).stage("resolve"); },
@@ -106,7 +108,8 @@ int main(int argc, char **argv) {
     auto cycle =
         PipelineDriver(image, config).stage("resolve").at("state_expansion");
     check(!cycle.at("truncated").get<bool>() &&
-              cycle.at("sites")[0].at("states") == JsonDoc::array({"0x0", "0x1"}),
+              cycle.at("sites")[0].at("states") ==
+                  JsonDoc::array({"0x0", "0x1"}),
           "cyclic state graph reaches a finite fixed point");
     rejects(
         [&] {
@@ -130,8 +133,8 @@ int main(int argc, char **argv) {
     config["execution"] = {
         {"known_vectors",
          JsonDoc::array({{{"entry", format_address(named(image, "state_wrap"))},
-                       {"input", "07"},
-                       {"output", "0700000000000000"}}})}};
+                          {"input", "07"},
+                          {"output", "0700000000000000"}}})}};
     auto observed = PipelineDriver(image, config).stage("resolve");
     for (const auto &flow : observed.at("flows"))
       for (const auto &target : flow.at("targets"))

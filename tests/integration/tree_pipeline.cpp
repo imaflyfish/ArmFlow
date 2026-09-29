@@ -56,8 +56,8 @@ int main(int argc, char **argv) {
                                                           : 23u;
         vectors.push_back(
             {{"entry", format_address(named(image, name == "tree_callee_saved"
-                                                    ? "tree_callee_observer"
-                                                    : name))},
+                                                       ? "tree_callee_observer"
+                                                       : name))},
              {"input", scalar(input)},
              {"output", scalar(expected)}});
       }
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
         rejects(
             [&] {
               PatchTransaction::commit(unmodified, image, plan,
-                                         EmulationOracle(one));
+                                       EmulationOracle(one));
             },
             "one observed path cannot certify binary tree rewrite: " + name);
         check(unmodified.fingerprint() == image.fingerprint(),
@@ -118,8 +118,9 @@ int main(int argc, char **argv) {
       check(workflow.execute("regress").at("passed").get<bool>(),
             "workflow regenerates tree plan and skips: " + name);
     }
-    JsonDoc config = {{"executable_regions", JsonDoc::array({{{"label", "load_0"}}})},
-                   {"functions", JsonDoc::array({"tree_bst_bounds"})}};
+    JsonDoc config = {
+        {"executable_regions", JsonDoc::array({{{"label", "load_0"}}})},
+        {"functions", JsonDoc::array({"tree_bst_bounds"})}};
     auto analysis = PipelineDriver(image, config).stage("survey");
     check(analysis.at("sites").size() == 1, "BST fixture recognized");
     const auto site = site_of_json(analysis.at("sites")[0]);

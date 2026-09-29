@@ -1,5 +1,5 @@
-#include <armflow/flow_analysis.hpp>
 #include <algorithm>
+#include <armflow/flow_analysis.hpp>
 #include <deque>
 namespace armflow {
 namespace {
@@ -111,7 +111,8 @@ JsonDoc expand_states(
     return {{"enabled", false}};
   const auto maximum =
       address_of_json(options.value("maximum_states", JsonDoc(256)));
-  auto budget = address_of_json(options.value("maximum_steps", JsonDoc(100000)));
+  auto budget =
+      address_of_json(options.value("maximum_steps", JsonDoc(100000)));
   if (!maximum || maximum > 65536 || !budget || budget > 1000000)
     throw FlowError("state expansion budget is outside its bounds");
   const auto extra = options.value("seed_states", JsonDoc::object());
@@ -141,10 +142,10 @@ JsonDoc expand_states(
   }
   const auto initial_budget = budget;
   JsonDoc report = {{"enabled", true},
-                 {"maximum_states", maximum},
-                 {"maximum_steps", budget},
-                 {"truncated", false},
-                 {"sites", JsonDoc::array()}};
+                    {"maximum_states", maximum},
+                    {"maximum_steps", budget},
+                    {"truncated", false},
+                    {"sites", JsonDoc::array()}};
   for (const auto &site : sites) {
     std::vector<std::size_t> transforms;
     std::set<std::uint64_t> seeds;
@@ -170,9 +171,9 @@ JsonDoc expand_states(
     if (const auto found = supplied.find(site.branch); found != supplied.end())
       seeds.insert(found->second.begin(), found->second.end());
     JsonDoc row = {{"site", format_address(site.branch)},
-                {"transitions", JsonDoc::array()},
-                {"unresolved", JsonDoc::array()},
-                {"truncated", false}};
+                   {"transitions", JsonDoc::array()},
+                   {"unresolved", JsonDoc::array()},
+                   {"truncated", false}};
     std::set<std::uint64_t> admitted;
     std::deque<std::uint64_t> pending;
     auto admit = [&](std::uint64_t state) {
@@ -251,9 +252,9 @@ JsonDoc expand_states(
             {{"arrival", format_address(flow.transition.arrival)},
              {"input_state", format_address(state)},
              {"output_state", format_address(next)},
-             {"destination", resolved.destination
-                                 ? JsonDoc(format_address(*resolved.destination))
-                                 : JsonDoc(nullptr)},
+             {"destination", resolved.destination ? JsonDoc(format_address(
+                                                        *resolved.destination))
+                                                  : JsonDoc(nullptr)},
              {"evidence", resolved.evidence}});
       }
     }

@@ -1,12 +1,11 @@
-#include <armflow/flow_analysis.hpp>
 #include <algorithm>
+#include <armflow/flow_analysis.hpp>
 #include <bit>
 namespace armflow {
 namespace {
 std::optional<Address> nearest_store(const BinaryImage &image,
-                                     const OpcodeDecoder &decoder,
-                                     Address from, Address lower,
-                                     const MemoryAccess &slot,
+                                     const OpcodeDecoder &decoder, Address from,
+                                     Address lower, const MemoryAccess &slot,
                                      unsigned budget) {
   Address current = from;
   for (unsigned count = 0; count < budget && current >= 4; ++count) {
@@ -39,9 +38,10 @@ std::optional<Address> nearest_store(const BinaryImage &image,
   return {};
 }
 std::optional<JsonDoc> transform_chain(const BinaryImage &image,
-                                    const OpcodeDecoder &decoder,
-                                    const ConstantWalker &tracker, Address use,
-                                    unsigned reg, const MemoryAccess &slot) {
+                                       const OpcodeDecoder &decoder,
+                                       const ConstantWalker &tracker,
+                                       Address use, unsigned reg,
+                                       const MemoryAccess &slot) {
   JsonDoc chain = JsonDoc::array();
   for (unsigned depth = 0; depth < 16; ++depth) {
     auto producer = tracker.producer(use, reg);
@@ -55,7 +55,7 @@ std::optional<JsonDoc> transform_chain(const BinaryImage &image,
       if (chain.empty())
         return {};
       return JsonDoc{{"source", format_address(*producer)},
-                  {"operations_reverse", chain}};
+                     {"operations_reverse", chain}};
     }
     if ((instruction.operation != Mnemonic::add &&
          instruction.operation != Mnemonic::subtract &&
@@ -73,9 +73,9 @@ std::optional<JsonDoc> transform_chain(const BinaryImage &image,
   return {};
 }
 std::optional<BranchTransition> flag_byte(const BinaryImage &image,
-                                        const OpcodeDecoder &decoder,
-                                        const ConstantWalker &tracker,
-                                        const SwitchSite &site) {
+                                          const OpcodeDecoder &decoder,
+                                          const ConstantWalker &tracker,
+                                          const SwitchSite &site) {
   auto and_pc =
       tracker.producer(site.load_target, static_cast<unsigned>(site.state_reg));
   if (!and_pc)

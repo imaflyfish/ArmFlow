@@ -1,5 +1,5 @@
-#include <armflow/binary_image.hpp>
 #include <algorithm>
+#include <armflow/binary_image.hpp>
 #include <cerrno>
 #include <charconv>
 #include <fstream>
@@ -44,7 +44,7 @@ std::string terminated(std::span<const std::uint8_t> view,
   return {start, finish};
 }
 JsonDoc yaml_value(const YAML::Node &node, std::size_t &remaining,
-                unsigned depth = 0) {
+                   unsigned depth = 0) {
   if (remaining == 0)
     throw FlowError("YAML node limit exceeded");
   --remaining;
@@ -191,21 +191,21 @@ JsonDoc document_of_bytes(std::span<const std::uint8_t> bytes) {
     throw FlowError("document size limit exceeded");
   std::vector<std::set<std::string>> keys(65);
   std::size_t events = 0;
-  return JsonDoc::parse(bytes.begin(), bytes.end(),
-                     [&](int depth, JsonDoc::parse_event_t event, JsonDoc &value) {
-                       if (depth < 0 || depth > 64 || ++events > 4000000)
-                         throw FlowError("JSON structural limit exceeded");
-                       if (event == JsonDoc::parse_event_t::object_start)
-                         keys[static_cast<std::size_t>(depth)].clear();
-                       if (event == JsonDoc::parse_event_t::key) {
-                         if (depth < 1 ||
-                             !keys[static_cast<std::size_t>(depth - 1)]
-                                  .insert(value.get<std::string>())
-                                  .second)
-                           throw FlowError("duplicate JSON key");
-                       }
-                       return true;
-                     });
+  return JsonDoc::parse(
+      bytes.begin(), bytes.end(),
+      [&](int depth, JsonDoc::parse_event_t event, JsonDoc &value) {
+        if (depth < 0 || depth > 64 || ++events > 4000000)
+          throw FlowError("JSON structural limit exceeded");
+        if (event == JsonDoc::parse_event_t::object_start)
+          keys[static_cast<std::size_t>(depth)].clear();
+        if (event == JsonDoc::parse_event_t::key) {
+          if (depth < 1 || !keys[static_cast<std::size_t>(depth - 1)]
+                                .insert(value.get<std::string>())
+                                .second)
+            throw FlowError("duplicate JSON key");
+        }
+        return true;
+      });
 }
 void store_document(const std::filesystem::path &path, const JsonDoc &value) {
   auto parent = path.parent_path().empty() ? std::filesystem::path(".")
@@ -281,7 +281,7 @@ void BinaryImage::validate() const {
   }
 }
 const ImageRegion *BinaryImage::region_at(Address address,
-                                         std::size_t length) const {
+                                          std::size_t length) const {
   for (const auto &region : regions)
     if (region.contains(address, length))
       return &region;
@@ -294,7 +294,7 @@ const RoutineSpan *BinaryImage::function_at(Address address) const {
   return nullptr;
 }
 std::optional<std::uint64_t> BinaryImage::integer(Address address,
-                                                unsigned width) const {
+                                                  unsigned width) const {
   auto region = region_at(address, width);
   if (!region || width == 0 || width > 8)
     return {};
@@ -316,7 +316,8 @@ ByteBuffer BinaryImage::read(Address address, std::size_t length) const {
   return {region->bytes.begin() + static_cast<std::ptrdiff_t>(offset),
           region->bytes.begin() + static_cast<std::ptrdiff_t>(offset + length)};
 }
-void BinaryImage::replace(Address address, std::span<const std::uint8_t> bytes) {
+void BinaryImage::replace(Address address,
+                          std::span<const std::uint8_t> bytes) {
   for (auto &region : regions)
     if (region.contains(address, bytes.size())) {
       std::copy(bytes.begin(), bytes.end(),
@@ -332,13 +333,13 @@ bool BinaryImage::valid_target(Address address) const {
 }
 JsonDoc BinaryImage::snapshot() const {
   JsonDoc result = {{"schema_version", 1},
-                 {"architecture", "aarch64"},
-                 {"entry", format_address(entry)},
-                 {"relocated", relocated},
-                 {"origin", origin},
-                 {"regions", JsonDoc::array()},
-                 {"functions", JsonDoc::array()},
-                 {"references", JsonDoc::array()}};
+                    {"architecture", "aarch64"},
+                    {"entry", format_address(entry)},
+                    {"relocated", relocated},
+                    {"origin", origin},
+                    {"regions", JsonDoc::array()},
+                    {"functions", JsonDoc::array()},
+                    {"references", JsonDoc::array()}};
   for (const auto &region : regions)
     result["regions"].push_back(
         {{"begin", format_address(region.begin)},
@@ -347,16 +348,17 @@ JsonDoc BinaryImage::snapshot() const {
          {"readable", region.readable},
          {"writable", region.writable},
          {"executable", region.executable},
-         {"source_offset",
-          region.source_offset ? JsonDoc(*region.source_offset) : JsonDoc(nullptr)}});
+         {"source_offset", region.source_offset ? JsonDoc(*region.source_offset)
+                                                : JsonDoc(nullptr)}});
   for (const auto &function : functions)
     result["functions"].push_back({{"begin", format_address(function.begin)},
                                    {"end", format_address(function.end)},
                                    {"label", function.label}});
   for (const auto &reference : references)
-    result["references"].push_back({{"source", format_address(reference.source)},
-                                    {"target", format_address(reference.target)},
-                                    {"owned", reference.owned}});
+    result["references"].push_back(
+        {{"source", format_address(reference.source)},
+         {"target", format_address(reference.target)},
+         {"owned", reference.owned}});
   return result;
 }
 std::string BinaryImage::fingerprint() const {
@@ -364,7 +366,7 @@ std::string BinaryImage::fingerprint() const {
   document.erase("origin");
   auto serialized = document.dump();
   return sha256_hex({reinterpret_cast<const std::uint8_t *>(serialized.data()),
-                 serialized.size()});
+                     serialized.size()});
 }
 BinaryImage BinaryImage::from_snapshot(const JsonDoc &document) {
   if (document.at("schema_version") != 1 ||
@@ -491,7 +493,7 @@ BinaryImage BinaryImage::from_elf(std::span<const std::uint8_t> file) {
   return result;
 }
 BinaryImage BinaryImage::from_flat(std::span<const std::uint8_t> file,
-                               const JsonDoc &mapping) {
+                                   const JsonDoc &mapping) {
   BinaryImage result;
   const auto &regions = mapping.at("regions");
   if (!regions.is_array() || regions.empty() || regions.size() > 4096)

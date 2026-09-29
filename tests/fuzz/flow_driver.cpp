@@ -24,7 +24,8 @@ void exercise(armflow::BinaryImage image) {
   auto plan = plan_patches(image, decoder, settings, sites, flows, none);
   extend_table_graph(image, settings, sites, plan);
   PatchTransaction::prepare(image, plan);
-  PatchTransaction::prepare(image, plan_filler_cleanup(image, decoder, settings));
+  PatchTransaction::prepare(image,
+                            plan_filler_cleanup(image, decoder, settings));
 }
 } // namespace
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data,

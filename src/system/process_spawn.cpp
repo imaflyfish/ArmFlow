@@ -67,9 +67,9 @@ ScratchDirectory::~ScratchDirectory() {
   std::filesystem::remove_all(path_, ignored);
 }
 CommandOutcome spawn_process(const std::vector<std::string> &arguments,
-                          std::span<const std::uint8_t> input,
-                          unsigned timeout_milliseconds,
-                          std::size_t maximum_output) {
+                             std::span<const std::uint8_t> input,
+                             unsigned timeout_milliseconds,
+                             std::size_t maximum_output) {
   if (arguments.empty() || arguments.size() > 256 || arguments[0].empty() ||
       timeout_milliseconds == 0 || timeout_milliseconds > 60000 ||
       maximum_output == 0 || maximum_output > 64 * 1024 * 1024 ||
@@ -132,8 +132,7 @@ CommandOutcome spawn_process(const std::vector<std::string> &arguments,
   posix_spawnattr_destroy(&attributes);
   if (status) {
     child.pid = -1;
-    throw FlowError("cannot launch process: " +
-                        std::string(strerror(status)));
+    throw FlowError("cannot launch process: " + std::string(strerror(status)));
   }
   input_child.close();
   output_child.close();

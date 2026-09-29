@@ -1,14 +1,15 @@
 #include <armflow/emulation.hpp>
 #include <armflow/subprocess.hpp>
 namespace armflow {
-JsonDoc gather_external_trace(const BinaryImage &image, const JsonDoc &configuration) {
+JsonDoc gather_external_trace(const BinaryImage &image,
+                              const JsonDoc &configuration) {
   if (!configuration.is_object())
     throw FlowError("trace_command requires an object");
   const auto &command = configuration.at("argv");
   if (!command.is_array() || command.empty() || command.size() > 256)
     throw FlowError("trace_command.argv requires 1..256 arguments");
-  const auto timeout =
-      address_of_json(configuration.value("timeout_milliseconds", JsonDoc(30000)));
+  const auto timeout = address_of_json(
+      configuration.value("timeout_milliseconds", JsonDoc(30000)));
   if (!timeout || timeout > 60000)
     throw FlowError("trace timeout must be in 1..60000 milliseconds");
   ScratchDirectory temporary;
@@ -20,10 +21,10 @@ JsonDoc gather_external_trace(const BinaryImage &image, const JsonDoc &configura
   std::vector<std::string> arguments;
   for (const auto &item : command) {
     auto value = item.get<std::string>();
-    for (const auto &[key, replacement] :
-         std::map<std::string, std::string>{{"{image}", path.string()},
-                                            {"{image_sha256}", fingerprint},
-                                            {"{entry}", format_address(entry)}}) {
+    for (const auto &[key, replacement] : std::map<std::string, std::string>{
+             {"{image}", path.string()},
+             {"{image_sha256}", fingerprint},
+             {"{entry}", format_address(entry)}}) {
       std::size_t position = 0;
       while ((position = value.find(key, position)) != std::string::npos) {
         value.replace(position, key.size(), replacement);
@@ -33,9 +34,9 @@ JsonDoc gather_external_trace(const BinaryImage &image, const JsonDoc &configura
     arguments.push_back(std::move(value));
   }
   const auto payload = JsonDoc({{"protocol_version", 1},
-                             {"source_sha256", fingerprint},
-                             {"image_path", path.string()},
-                             {"entry", format_address(entry)}})
+                                {"source_sha256", fingerprint},
+                                {"image_path", path.string()},
+                                {"entry", format_address(entry)}})
                            .dump();
   auto response = spawn_process(
       arguments,
@@ -43,7 +44,7 @@ JsonDoc gather_external_trace(const BinaryImage &image, const JsonDoc &configura
       static_cast<unsigned>(timeout));
   if (response.exit_code)
     throw FlowError("trace command exited unsuccessfully: " +
-                        std::to_string(response.exit_code));
+                    std::to_string(response.exit_code));
   auto document = document_of_bytes(response.output);
   if (!document.is_object() ||
       document.at("source_sha256").get<std::string>() != fingerprint)
